@@ -84,7 +84,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       <span class="text-2xl font-bold text-blue-800 block m-4">DPSCD ESE Program
         Finder</span>
       <hr class="mr-6 ml-6 clear-both text-blue-800" />
-      <div class="p-6">
+      <div class="p-6 scheme-light">
         <h1>Find a Program</h1>
         <UForm :state="state" @submit="onSubmit">
           <UFormField name="address" placeholder="Enter your address" :validation="schema.shape.address">
