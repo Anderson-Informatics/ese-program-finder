@@ -79,7 +79,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 </script>
 <template>
   <div class="grid grid-cols-3 h-screen">
-    <div class="md:col-span-1 col-span-3">
+    <div class="md:col-span-1 col-span-3 bg-white">
       <img src="/Logo.png" alt="Logo" class="h-20 m-2 float-left" />
       <span class="text-2xl font-bold text-blue-800 block m-4">DPSCD ESE Program
         Finder</span>
@@ -120,7 +120,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     <div class="hidden col-span-2 md:block relative">
       <div v-if="!assignedProgram && !userAddressPin"
         class="m-auto p-6 w-3/5 h-3/5 bg-white opacity-75 rounded-lg absolute z-10 inset-20">
-        <p class="opacity-100 p-6 text-2xl justify-center text-center"><em>Please enter the student's information on the
+        <p class="opacity-100 p-6 text-2xl text-gray-950 justify-center text-center"><em>Please enter the student's
+            information on the
             left to
             see your
             assigned program on the map.</em></p>
