@@ -14,4 +14,7 @@ export default defineNuxtConfig({
   nitro: {
     plugins: ["~~/server/plugins/mongodb.ts"],
   },
+  ui: {
+    colorMode: false,
+  },
 });

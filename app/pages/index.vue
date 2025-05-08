@@ -79,12 +79,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 </script>
 <template>
   <div class="grid grid-cols-3 h-screen">
-    <div class="md:col-span-1 col-span-3 bg-white">
+    <div class="md:col-span-1 col-span-3">
       <img src="/Logo.png" alt="Logo" class="h-20 m-2 float-left" />
       <span class="text-2xl font-bold text-blue-800 block m-4">DPSCD ESE Program
         Finder</span>
       <hr class="mr-6 ml-6 clear-both text-blue-800" />
-      <div class="p-6 scheme-light">
+      <div class="p-6">
         <h1>Find a Program</h1>
         <UForm :state="state" @submit="onSubmit">
           <UFormField name="address" placeholder="Enter your address" :validation="schema.shape.address">
