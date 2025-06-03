@@ -5,16 +5,46 @@ import { UFormField } from '#components'
 
 const schema = z.object({
   address: z.string().min(5),
-  grade: z.enum(['PreK', 'K', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']),
-  program: z.enum(['ASD', 'MOCI', 'MICI', 'ECSE', 'HI', 'VI', 'DHH']),
+  grade: z.enum(['PreK', 'Kindergarten', '1st grade', '2nd grade', '3rd grade', '4th grade', '5th grade', '6th grade', '7th grade', '8th grade', '9th grade', '10th grade', '11th grade', '12th grade', 'Post-Secondary']),
+  program: z.enum([
+    'Autism Spectrum Disorder',
+    'Day Treatment',
+    'Deaf and Hard of Hearing',
+    'Dual Diagnosed (Emotionally Impaired)',
+    'Early Childhood Special Education',
+    'Early Intervention',
+    'Emotionally Impaired',
+    'Mild Cognitive Impaired',
+    'Moderate Cognitive Impaired',
+    'Physically/Other Health Impaired',
+    'Resource Room',
+    'Severe Cognitive Impaired',
+    'Severe Multiple Impaired',
+    'Visually Impaired'
+  ]),
+  setting: z.enum(['Center-Based', 'Comprehensive', 'Not Sure'])
 })
 
 type Schema = z.output<typeof schema>
 
 const state = reactive({
   address: '',
-  grade: undefined as "PreK" | "K" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12" | undefined,
-  program: undefined as "ASD" | "MOCI" | "MICI" | "ECSE" | "HI" | "VI" | "DHH" | undefined,
+  grade: undefined as "PreK" | "Kindergarten" | "1st grade" | "2nd grade" | "3rd grade" | "4th grade" | "5th grade" | "6th grade" | "7th grade" | "8th grade" | "9th grade" | "10th grade" | "11th grade" | "12th grade" | "Post-Secondary" | undefined,
+  program: undefined as 'Autism Spectrum Disorder' |
+    'Day Treatment' |
+    'Deaf and Hard of Hearing' |
+    'Dual Diagnosed (Emotionally Impaired)' |
+    'Early Childhood Special Education' |
+    'Early Intervention' |
+    'Emotionally Impaired' |
+    'Mild Cognitive Impaired' |
+    'Moderate Cognitive Impaired' |
+    'Physically/Other Health Impaired' |
+    'Resource Room' |
+    'Severe Cognitive Impaired' |
+    'Severe Multiple Impaired' |
+    'Visually Impaired' | undefined,
+  setting: undefined as 'Center-Based' | 'Comprehensive' | 'Not Sure' | undefined
 })
 
 const mapCenter = ref<[number, number]>([42.3797, -83.0925])
@@ -42,10 +72,28 @@ interface AssignedProgram {
   [key: string]: any; // Add other properties as needed
 }
 
+const referenceText = ref<string | null>(null)
+
+const showPostSecondary = ref<boolean>(false)
+const showResourceRoom = ref<boolean>(false)
+const showCenterBased = ref<boolean>(false)
+const showDualDiagnosed = ref<boolean>(false)
+const showGeneralSupport = ref<boolean>(false)
+
 const assignedProgram = ref<AssignedProgram | null>(null)
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   console.log(event.data)
+  // Reset the reference text and assigned program
+  referenceText.value = null
+  assignedProgram.value = null
+  showGeneralSupport.value = false
+  showDualDiagnosed.value = false
+  showCenterBased.value = false
+  showPostSecondary.value = false
+  showResourceRoom.value = false
+
+  // Handle the home address geocoding and map pinning
   const geocodeResult = await geocode_address(event.data.address)
   if (geocodeResult && 'access' in geocodeResult) {
     if (geocodeResult.access && geocodeResult.access[0]) {
@@ -56,10 +104,36 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   } else {
     userAddressPin.value = null
   }
-  const program = userAddressPin.value
-    ? await $fetch(`/api/programs?grade=${event.data.grade}&program=${event.data.program}&lat=${userAddressPin.value[0]}&lng=${userAddressPin.value[1]}`)
-    : null;
-  assignedProgram.value = program && program[0] ? program[0] : null
+
+  // Handle the program assignment
+  if (['Day Treatment', 'Visually Impaired'].includes(event.data.program)) {
+    showGeneralSupport.value = true
+  } else if (event.data.program === 'Dual Diagnosed (Emotionally Impaired)') {
+    showDualDiagnosed.value = true
+  } else if (event.data.grade === 'Post-Secondary') {
+    showPostSecondary.value = true
+    const program = userAddressPin.value
+      ? await $fetch(`/api/programs?grade=${event.data.grade}&program=${event.data.program}&lat=${userAddressPin.value[0]}&lng=${userAddressPin.value[1]}&setting=${event.data.setting}`)
+      : null;
+    assignedProgram.value = program && program[0] ? program[0] : null
+  } else if (event.data.program === 'Resource Room') {
+    showResourceRoom.value = true
+    const program = userAddressPin.value
+      ? await $fetch(`/api/programs?grade=${event.data.grade}&program=${event.data.program}&lat=${userAddressPin.value[0]}&lng=${userAddressPin.value[1]}&setting=${event.data.setting}`)
+      : null;
+    assignedProgram.value = program && program[0] ? program[0] : null
+  } else if (event.data.setting === 'Center-Based') {
+    showCenterBased.value = true
+    const program = userAddressPin.value
+      ? await $fetch(`/api/programs?grade=${event.data.grade}&program=${event.data.program}&lat=${userAddressPin.value[0]}&lng=${userAddressPin.value[1]}&setting=${event.data.setting}`)
+      : null;
+    assignedProgram.value = program && program[0] ? program[0] : null
+  } else {
+    const program = userAddressPin.value
+      ? await $fetch(`/api/programs?grade=${event.data.grade}&program=${event.data.program}&lat=${userAddressPin.value[0]}&lng=${userAddressPin.value[1]}&setting=${event.data.setting}`)
+      : null;
+    assignedProgram.value = program && program[0] ? program[0] : null
+  }
 
   // Make the map center between the user address and the assigned program
   if (userAddressPin.value && assignedProgram.value) {
@@ -87,6 +161,28 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       <div class="p-6">
         <h1>Find a Program</h1>
         <UForm :state="state" @submit="onSubmit">
+          <UPopover mode="click" :content="{
+            align: 'end',
+            side: 'bottom',
+            sideOffset: 8
+          }">
+            <UButton class="w-full mt-2 text-left" color="warning">
+              Using the IEP to Determine Program (Placement) vs.
+              Disability
+            </UButton>
+            <template #content>
+              <div class="m-4 pt-4 pb-4 size-80 text-sm">
+                <strong>Student’s Disability:</strong>
+                <p>Found near the beginning of the IEP under "Primary Disability". This lists the primary disability
+                  (e.g., Autism Spectrum Disorder, Specific Learning Disability, Cognitive Impairment, Emotional
+                  Impairment).</p><br />
+                <strong>Program Placement:</strong>
+                <p>Found toward the end of the IEP under "Programs and Services" section of the IEP.
+                  This explains where services will be provided (e.g., general education, special class, specialized
+                  program) and how much time the student will spend in each setting.</p>
+              </div>
+            </template>
+          </UPopover>
           <UFormField name="address" placeholder="Enter your address" :validation="schema.shape.address">
             <UInput class="w-full mt-2" v-model="state.address" placeholder="Enter your address" />
           </UFormField>
@@ -100,22 +196,76 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               placeholder="Select a program">
             </USelect>
           </UFormField>
+
+
+          <UFormField
+            v-if="['Autism Spectrum Disorder', 'Mild Cognitive Impaired', 'Moderate Cognitive Impaired'].includes(state.program ?? '')"
+            name="setting" :validation="schema.shape.setting">
+            <USelect class="w-full mt-2" v-model="state.setting" :items="schema.shape.setting.options"
+              placeholder="Select the primary educational setting">
+            </USelect>
+          </UFormField>
           <UButton class="mt-2 mb-6 float-right bg-blue-800 hover:bg-blue-400 text-white" type="submit">
             Submit
           </UButton>
         </UForm>
         <hr class="mb-6 clear-both text-blue-800" />
-        <UPageList divide class="clear-both">
-          <p v-if="!assignedProgram">Please enter your address, grade, and program to see your assigned school.</p>
+        <UPageList class="clear-both">
+          <div v-if="!assignedProgram && !userAddressPin">
+            <p>Please enter your address, grade, and program to see your
+              suggested school.</p>
+          </div>
+          <div v-if="referenceText" class="mb-6">
+            <h2 class="text-lg font-bold">Helpful Information</h2>
+            {{ referenceText }}
+          </div>
+          <div v-if="showGeneralSupport" class="mb-6">
+            <h2 class="text-lg font-bold">Further Support</h2>
+            <p>Please contact the ESE Office of Enrollment by email: <a
+                href="mailto: esespecial.programs@detroitk12.org"
+                class="text-blue-800">esespecial.programs@detroitk12.org</a>
+              or phone: (313) 748-6363.<br /> Coordination and placement support provided.</p>
+          </div>
+          <div v-if="showDualDiagnosed" class="mb-6">
+            <h2 class="text-lg font-bold">Further Support</h2>
+            <p>Please contact the ESE Office of Enrollment by email: <a
+                href="mailto: esespecial.programs@detroitk12.org"
+                class="text-blue-800">esespecial.programs@detroitk12.org</a>
+              or phone: (313) 748-6363 or enroll at your neighborhood school to receive assistance with enrollment.</p>
+          </div>
+          <div v-if="showCenterBased" class="mb-6">
+            <h2 class="text-lg font-bold">Separate Facility/Center-Based</h2>
+            <p>Student attends a separate school for students with disabilities only and receives specially designed
+              instruction by a special education teacher and has limited to no access to general education and
+              nondisabled peers.</p>
+            <h2 class="text-lg font-bold">Center-Based Placement Criteria</h2>
+            <p>Eligibility is determined by the IEP Team. If your student may qualify for a separate facility, please
+              contact our ESE Office of Enrollment for review by email: <a
+                href="mailto: esespecial.programs@detroitk12.org"
+                class="text-blue-800">esespecial.programs@detroitk12.org</a>
+              or phone: (313) 748-6363.</p>
+          </div>
+          <div v-if="showPostSecondary" class="mb-6">
+            <h2 class="text-lg font-bold">Grade 14 / Transition Services (Ages 18–26)</h2>
+            <p>Grade 14 services are available for students who have not met their transition goals whose course of
+              study has been identified as Certificate of Completion on the IEP and fall between the ages of 18-26.
+              Placement is based on student’s individual needs and ESE programs and services.</p>
+          </div>
+          <div v-if="showResourceRoom" class="mb-6">
+            <p>Resource Room programs are available at all DPSCD schools. Your suggested school is the assigned school
+              based on the student's home address and grade level.</p>
+          </div>
+
           <div v-if="assignedProgram">
-            <h2 class="text-lg font-bold">Assigned Program</h2>
-            {{ assignedProgram['School Name'] }}<br />
+            <h2 class="text-lg font-bold">Suggested Program</h2>
+            <ULink :to="assignedProgram.url" target="_blank" class="font-bold">{{ assignedProgram['School Name'] }}
+            </ULink>
+            <br />
             {{ assignedProgram.Address }}<br />
-            {{ assignedProgram.Type }}
+            {{ assignedProgram['Main office number'] }}
           </div>
         </UPageList>
       </div>
-
     </div>
     <div class="hidden col-span-2 md:block relative">
       <div v-if="!assignedProgram && !userAddressPin"
@@ -124,7 +274,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             information on the
             left to
             see your
-            assigned program on the map.</em></p>
+            suggested ESE program on the map.</em></p>
       </div>
       <LMap class="h-full z-0" :zoom="12" :center="mapCenter" :use-global-leaflet="false">
         <LTileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -140,6 +290,5 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </LMarker>
       </LMap>
     </div>
-
   </div>
 </template>

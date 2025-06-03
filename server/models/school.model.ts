@@ -23,6 +23,8 @@ const schema: mongoose.Schema = new mongoose.Schema({
   ShortName: String,
   Capacity: Object,
   Att_Folder: String,
+  url: String,
+  "Main office number": String,
 });
 
 // schools model

@@ -3,23 +3,78 @@ import SchoolModel from "~~/server/models/school.model";
 
 export default defineEventHandler(async (event) => {
   // Get the query parameters from the request
-  const { grade, program, lat, lng } = getQuery(event) as {
-    grade: keyof (typeof grade_band_map)[keyof typeof grade_band_map];
-    program: keyof typeof grade_band_map;
+  const { grade, program, lat, lng, setting } = getQuery(event) as {
+    grade: keyof typeof grade_band_map;
+    program: keyof typeof program_string_map;
     lat: number;
     lng: number;
+    setting?: string;
   };
 
-  // Get the assigned neighborhood school
-  const nhschoolData = await $fetch(
-    `/api/boundaries?lat=${lat}&lng=${lng}&grade=${grade}`
-  );
-  const nhid = nhschoolData.filter((item) => {
-    // Filter out the schools that are not in the same program
-    if (item.Type === "Neighborhood") {
-      return item;
-    }
-  })[0].SchoolID;
+  // Convert the program string to a short key
+  const grade_string_map: Record<
+    string,
+    keyof (typeof grade_band_map)[keyof typeof grade_band_map]
+  > = {
+    PreK: "PreK",
+    Kindergarten: "K",
+    "1st grade": "1",
+    "2nd grade": "2",
+    "3rd grade": "3",
+    "4th grade": "4",
+    "5th grade": "5",
+    "6th grade": "6",
+    "7th grade": "7",
+    "8th grade": "8",
+    "9th grade": "9",
+    "10th grade": "10",
+    "11th grade": "11",
+    "12th grade": "12",
+    "Post-Secondary": "14",
+  };
+
+  // Convert the program string to a short key
+  const program_string_map: Record<string, keyof typeof grade_band_map> = {
+    "Autism Spectrum Disorder": "ASD",
+    "Day Treatment": "DT",
+    "Deaf and Hard of Hearing": "DHH",
+    "Dual Diagnosed (Emotionally Impaired)": "DDEI",
+    "Early Childhood Special Education": "ECSE",
+    "Early Intervention": "EINT",
+    "Emotionally Impaired": "EI",
+    "Mild Cognitive Impaired": "MICI",
+    "Moderate Cognitive Impaired": "MOCI",
+    "Physically/Other Health Impaired": "POHI",
+    "Resource Room": "RR",
+    "Severe Cognitive Impaired": "SCI",
+    "Severe Multiple Impaired": "SMI",
+    "Visually Impaired": "VI",
+  };
+
+  const programKey = program_string_map[program];
+  console.log("Program: ", program);
+  console.log("Program Key: ", programKey);
+  const gradeKey = grade_string_map[grade];
+  console.log("Grade: ", grade);
+  console.log("Grade Key: ", gradeKey);
+
+  let nhschoolData;
+  let nhid: number | undefined;
+
+  if (["PreK", "Post-Secondary"].includes(grade)) {
+  } else {
+    // Get the assigned neighborhood school
+    nhschoolData = await $fetch(
+      `/api/boundaries?lat=${lat}&lng=${lng}&grade=${gradeKey}`
+    );
+    nhid = nhschoolData.filter((item) => {
+      // Filter out the schools that are not in the same program
+      if (item.Type === "Neighborhood") {
+        return item;
+      }
+    })[0].SchoolID;
+    console.log("Neighborhood School ID: ", nhid);
+  }
 
   const grade_band_map = {
     ASD: {
@@ -37,6 +92,7 @@ export default defineEventHandler(async (event) => {
       "10": "9-12",
       "11": "9-12",
       "12": "9-12",
+      "14": "14",
     },
     MICI: {
       PreK: "PK-5",
@@ -53,6 +109,7 @@ export default defineEventHandler(async (event) => {
       "10": "9-12",
       "11": "9-12",
       "12": "9-12",
+      "14": "14",
     },
     ECSE: {
       PreK: "PK",
@@ -69,6 +126,7 @@ export default defineEventHandler(async (event) => {
       "10": "None",
       "11": "None",
       "12": "None",
+      "14": "None",
     },
     MOCI: {
       PreK: "PK-5",
@@ -85,6 +143,7 @@ export default defineEventHandler(async (event) => {
       "10": "9-12",
       "11": "9-12",
       "12": "9-12",
+      "14": "14",
     },
     POHI: {
       PreK: "PK-2",
@@ -101,6 +160,7 @@ export default defineEventHandler(async (event) => {
       "10": "None",
       "11": "None",
       "12": "None",
+      "14": "None",
     },
     EI: {
       PreK: "PK-5",
@@ -117,6 +177,7 @@ export default defineEventHandler(async (event) => {
       "10": "None",
       "11": "None",
       "12": "None",
+      "14": "None",
     },
     VI: {
       PreK: "PK-12",
@@ -133,6 +194,7 @@ export default defineEventHandler(async (event) => {
       "10": "PK-12",
       "11": "PK-12",
       "12": "PK-12",
+      "14": "14",
     },
     HI: {
       PreK: "PK-12",
@@ -149,6 +211,7 @@ export default defineEventHandler(async (event) => {
       "10": "PK-12",
       "11": "PK-12",
       "12": "PK-12",
+      "14": "14",
     },
     DHH: {
       PreK: "PK-2",
@@ -165,24 +228,128 @@ export default defineEventHandler(async (event) => {
       "10": "9-12",
       "11": "9-12",
       "12": "9-12",
+      "14": "14",
+    },
+    DT: {
+      PreK: "None",
+      K: "K-12",
+      "1": "K-12",
+      "2": "K-12",
+      "3": "K-12",
+      "4": "K-12",
+      "5": "K-12",
+      "6": "K-12",
+      "7": "K-12",
+      "8": "K-12",
+      "9": "K-12",
+      "10": "K-12",
+      "11": "K-12",
+      "12": "K-12",
+      "14": "14",
+    },
+    DDEI: {
+      PreK: "None",
+      K: "K-12",
+      "1": "K-12",
+      "2": "K-12",
+      "3": "K-12",
+      "4": "K-12",
+      "5": "K-12",
+      "6": "K-12",
+      "7": "K-12",
+      "8": "K-12",
+      "9": "K-12",
+      "10": "K-12",
+      "11": "K-12",
+      "12": "K-12",
+      "14": "14",
+    },
+    EINT: {
+      PreK: "PK",
+      K: "None",
+      "1": "None",
+      "2": "None",
+      "3": "None",
+      "4": "None",
+      "5": "None",
+      "6": "None",
+      "7": "None",
+      "8": "None",
+      "9": "None",
+      "10": "None",
+      "11": "None",
+      "12": "None",
+      "14": "None",
+    },
+    RR: {
+      PreK: "None",
+      K: "None",
+      "1": "None",
+      "2": "None",
+      "3": "None",
+      "4": "None",
+      "5": "None",
+      "6": "None",
+      "7": "None",
+      "8": "None",
+      "9": "None",
+      "10": "None",
+      "11": "None",
+      "12": "None",
+      "14": "None",
+    },
+    SCI: {
+      PreK: "PK-8",
+      K: "PK-8",
+      "1": "PK-8",
+      "2": "PK-8",
+      "3": "PK-8",
+      "4": "PK-8",
+      "5": "PK-8",
+      "6": "PK-8",
+      "7": "PK-8",
+      "8": "PK-8",
+      "9": "9-12",
+      "10": "9-12",
+      "11": "9-12",
+      "12": "9-12",
+      "14": "14",
+    },
+    SMI: {
+      PreK: "PK-8",
+      K: "PK-8",
+      "1": "PK-8",
+      "2": "PK-8",
+      "3": "PK-8",
+      "4": "PK-8",
+      "5": "PK-8",
+      "6": "PK-8",
+      "7": "PK-8",
+      "8": "PK-8",
+      "9": "9-12",
+      "10": "9-12",
+      "11": "9-12",
+      "12": "9-12",
+      "14": "14",
     },
   };
   // Get the grade band for the given program and grade
   let gradeBand: string | undefined;
   if (
-    program in grade_band_map &&
-    grade in grade_band_map[program as keyof typeof grade_band_map]
+    programKey in grade_band_map &&
+    gradeKey in grade_band_map[programKey as keyof typeof grade_band_map]
   ) {
-    gradeBand = grade_band_map[program][grade];
+    gradeBand = grade_band_map[programKey][gradeKey];
   } else {
     console.error("Invalid program or grade");
     return [];
   }
+  console.log("Grade Band: ", gradeBand);
 
   // Query the database for matching programs
   const programs = await ProgramModel.find(
     {
-      [`${program}.${gradeBand}`]: { $gt: 0 },
+      [`${programKey}.${gradeBand}`]: { $gt: 0 },
     },
     { SchoolID: 1, _id: 0 }
   );
@@ -214,6 +381,8 @@ export default defineEventHandler(async (event) => {
         location: 1,
         Type: 1,
         ShortName: 1,
+        url: 1,
+        "Main office number": 1,
       }
     ).limit(1);
     return nearest;
@@ -235,23 +404,58 @@ export default defineEventHandler(async (event) => {
     [4477, 858, 860, 2383, 2669, 3123],
   ];
 
-  // This is the feeder group of the neighborhood school
-  const feederSchools = feederGroups.filter((group) => {
-    return nhid !== undefined && group.includes(nhid);
-  })[0];
+  const centers = [
+    { school: "Turning Point", SchoolID: 3284 },
+    { school: "Keidan", SchoolID: 9594 },
+    { school: "Moses Field", SchoolID: 8951 },
+    { school: "Drew", SchoolID: 859 },
+    { school: "Jerry White", SchoolID: 9592 },
+  ];
 
-  // This will be any school ids that have the desired program in the feeder group
-  const feederPrograms = programIds.filter((element) =>
-    feederSchools.includes(element)
-  );
+  let feederSchools: number[] = [];
+  let feederPrograms: number[] = [];
+  if (["PreK", "Post-Secondary"].includes(grade)) {
+  } else {
+    // This is the feeder group of the neighborhood school
+    feederSchools = feederGroups.filter((group) => {
+      return nhid !== undefined && group.includes(nhid);
+    })[0];
+
+    // This will be any school ids that have the desired program in the feeder group
+    feederPrograms = programIds.filter((element) =>
+      feederSchools.includes(element)
+    );
+  }
 
   let assignment = null;
   if (program === "VI") {
     assignment = await $fetch(`/api/schools?SchoolID=176`); // Golightly
+  } else if (["RR"].includes(programKey)) {
+    assignment = await $fetch(`/api/schools?SchoolID=${nhid}`); // Neighborhood school
+  } else if (["SCI", "SMI"].includes(programKey)) {
+    if (gradeBand === "PK-8") {
+      assignment = await find_nearest_school(lat, lng, [9594, 8951]); // Keidan or Moses Field
+    } else if (gradeBand === "9-12") {
+      assignment = await $fetch(`/api/schools?SchoolID=9592`); // Jerry White
+    } else if (gradeBand === "14") {
+      assignment = await $fetch(`/api/schools?SchoolID=859`); // Drew
+    } else {
+      assignment = [];
+    }
+  } else if (setting === "Center-Based") {
+    if (["PK-5", "6-8", "PK-2", "3-5"].includes(gradeBand)) {
+      assignment = await find_nearest_school(lat, lng, [9594, 8951]); // Keidan or Moses Field
+    } else if (gradeBand === "9-12") {
+      assignment = await $fetch(`/api/schools?SchoolID=9592`); // Jerry White
+    } else if (gradeBand === "14") {
+      assignment = await $fetch(`/api/schools?SchoolID=859`); // Drew
+    }
   } else if (nhid && programIds.includes(nhid)) {
     assignment = await $fetch(`/api/schools?SchoolID=${nhid}`);
   } else if (feederPrograms.length > 0) {
     assignment = await find_nearest_school(lat, lng, feederPrograms);
+  } else if (program === "DT") {
+    assignment = await find_nearest_school(lat, lng, programIds);
   } else {
     assignment = await find_nearest_school(lat, lng, programIds);
   }

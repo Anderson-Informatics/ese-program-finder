@@ -10,6 +10,8 @@ export default defineEventHandler(async (event) => {
     location: 1,
     Type: 1,
     ShortName: 1,
+    url: 1,
+    "Main office number": 1,
   });
 
   return schools;
