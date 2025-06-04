@@ -5,7 +5,7 @@ import { UFormField } from '#components'
 
 const schema = z.object({
   address: z.string().min(5),
-  grade: z.enum(['PreK', 'Kindergarten', '1st grade', '2nd grade', '3rd grade', '4th grade', '5th grade', '6th grade', '7th grade', '8th grade', '9th grade', '10th grade', '11th grade', '12th grade', 'Post-Secondary']),
+  grade: z.enum(['Birth to 3', 'PreK', 'Kindergarten', '1st grade', '2nd grade', '3rd grade', '4th grade', '5th grade', '6th grade', '7th grade', '8th grade', '9th grade', '10th grade', '11th grade', '12th grade', 'Post-Secondary']),
   program: z.enum([
     'Autism Spectrum Disorder',
     'Day Treatment',
@@ -29,7 +29,7 @@ type Schema = z.output<typeof schema>
 
 const state = reactive({
   address: '',
-  grade: undefined as "PreK" | "Kindergarten" | "1st grade" | "2nd grade" | "3rd grade" | "4th grade" | "5th grade" | "6th grade" | "7th grade" | "8th grade" | "9th grade" | "10th grade" | "11th grade" | "12th grade" | "Post-Secondary" | undefined,
+  grade: undefined as "Birth to 3" | "PreK" | "Kindergarten" | "1st grade" | "2nd grade" | "3rd grade" | "4th grade" | "5th grade" | "6th grade" | "7th grade" | "8th grade" | "9th grade" | "10th grade" | "11th grade" | "12th grade" | "Post-Secondary" | undefined,
   program: undefined as 'Autism Spectrum Disorder' |
     'Day Treatment' |
     'Deaf and Hard of Hearing' |

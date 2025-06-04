@@ -16,6 +16,7 @@ export default defineEventHandler(async (event) => {
     string,
     keyof (typeof grade_band_map)[keyof typeof grade_band_map]
   > = {
+    "Birth to 3": "B3",
     PreK: "PreK",
     Kindergarten: "K",
     "1st grade": "1",
@@ -61,7 +62,7 @@ export default defineEventHandler(async (event) => {
   let nhschoolData;
   let nhid: number | undefined;
 
-  if (["PreK", "Post-Secondary"].includes(grade)) {
+  if (["Birth to 3", "PreK", "Post-Secondary"].includes(grade)) {
   } else {
     // Get the assigned neighborhood school
     nhschoolData = await $fetch(
@@ -78,6 +79,7 @@ export default defineEventHandler(async (event) => {
 
   const grade_band_map = {
     ASD: {
+      B3: "None",
       PreK: "PK-2",
       K: "PK-2",
       "1": "PK-2",
@@ -95,6 +97,7 @@ export default defineEventHandler(async (event) => {
       "14": "14",
     },
     MICI: {
+      B3: "None",
       PreK: "PK-5",
       K: "PK-5",
       "1": "PK-5",
@@ -112,6 +115,7 @@ export default defineEventHandler(async (event) => {
       "14": "14",
     },
     ECSE: {
+      B3: "None",
       PreK: "PK",
       K: "None",
       "1": "None",
@@ -129,6 +133,7 @@ export default defineEventHandler(async (event) => {
       "14": "None",
     },
     MOCI: {
+      B3: "None",
       PreK: "PK-5",
       K: "PK-5",
       "1": "PK-5",
@@ -146,6 +151,7 @@ export default defineEventHandler(async (event) => {
       "14": "14",
     },
     POHI: {
+      B3: "None",
       PreK: "PK-2",
       K: "PK-2",
       "1": "PK-2",
@@ -163,6 +169,7 @@ export default defineEventHandler(async (event) => {
       "14": "None",
     },
     EI: {
+      B3: "None",
       PreK: "PK-5",
       K: "PK-5",
       "1": "PK-5",
@@ -180,6 +187,7 @@ export default defineEventHandler(async (event) => {
       "14": "None",
     },
     VI: {
+      B3: "None",
       PreK: "PK-12",
       K: "PK-12",
       "1": "PK-12",
@@ -197,6 +205,7 @@ export default defineEventHandler(async (event) => {
       "14": "14",
     },
     HI: {
+      B3: "None",
       PreK: "PK-12",
       K: "PK-12",
       "1": "PK-12",
@@ -214,6 +223,7 @@ export default defineEventHandler(async (event) => {
       "14": "14",
     },
     DHH: {
+      B3: "None",
       PreK: "PK-2",
       K: "PK-2",
       "1": "PK-2",
@@ -231,6 +241,7 @@ export default defineEventHandler(async (event) => {
       "14": "14",
     },
     DT: {
+      B3: "None",
       PreK: "None",
       K: "K-12",
       "1": "K-12",
@@ -248,6 +259,7 @@ export default defineEventHandler(async (event) => {
       "14": "14",
     },
     DDEI: {
+      B3: "None",
       PreK: "None",
       K: "K-12",
       "1": "K-12",
@@ -265,7 +277,8 @@ export default defineEventHandler(async (event) => {
       "14": "14",
     },
     EINT: {
-      PreK: "PK",
+      B3: "Birth to 3",
+      PreK: "None",
       K: "None",
       "1": "None",
       "2": "None",
@@ -282,6 +295,7 @@ export default defineEventHandler(async (event) => {
       "14": "None",
     },
     RR: {
+      B3: "None",
       PreK: "None",
       K: "None",
       "1": "None",
@@ -299,6 +313,7 @@ export default defineEventHandler(async (event) => {
       "14": "None",
     },
     SCI: {
+      B3: "None",
       PreK: "PK-8",
       K: "PK-8",
       "1": "PK-8",
@@ -316,6 +331,7 @@ export default defineEventHandler(async (event) => {
       "14": "14",
     },
     SMI: {
+      B3: "None",
       PreK: "PK-8",
       K: "PK-8",
       "1": "PK-8",
@@ -333,6 +349,7 @@ export default defineEventHandler(async (event) => {
       "14": "14",
     },
   };
+
   // Get the grade band for the given program and grade
   let gradeBand: string | undefined;
   if (
@@ -414,7 +431,8 @@ export default defineEventHandler(async (event) => {
 
   let feederSchools: number[] = [];
   let feederPrograms: number[] = [];
-  if (["PreK", "Post-Secondary"].includes(grade)) {
+  if (["Birth to 3", "PreK", "Post-Secondary"].includes(grade)) {
+    // Do nothing, no neighborhood schools for these grades
   } else {
     // This is the feeder group of the neighborhood school
     feederSchools = feederGroups.filter((group) => {
@@ -428,10 +446,10 @@ export default defineEventHandler(async (event) => {
   }
 
   let assignment = null;
-  if (program === "VI") {
-    assignment = await $fetch(`/api/schools?SchoolID=176`); // Golightly
-  } else if (["RR"].includes(programKey)) {
+  if (["RR"].includes(programKey)) {
     assignment = await $fetch(`/api/schools?SchoolID=${nhid}`); // Neighborhood school
+  } else if (["EINT"].includes(programKey)) {
+    assignment = await $fetch(`/api/schools?SchoolID=209594`); // EIDC
   } else if (["SCI", "SMI"].includes(programKey)) {
     if (gradeBand === "PK-8") {
       assignment = await find_nearest_school(lat, lng, [9594, 8951]); // Keidan or Moses Field
