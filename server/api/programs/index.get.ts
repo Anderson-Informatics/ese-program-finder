@@ -372,6 +372,7 @@ export default defineEventHandler(async (event) => {
   );
   // Turn the program info into array of school IDs
   const programIds = programs.map((item) => item.SchoolID as number);
+  console.log("Program IDs: ", programIds);
 
   // Now for the fun logic of making the program assignment
   const find_nearest_school = async (
@@ -407,18 +408,18 @@ export default defineEventHandler(async (event) => {
 
   // These are the full feeder groups of the neighborhood schools
   const feederGroups = [
-    [18, 4, 103, 456, 546, 853, 925, 939, 1438],
+    [18, 4, 103, 456, 546, 853, 925, 939, 1084, 1362, 1438, 2341, 3640],
     [32, 5, 2377, 3130, 9341],
     [617, 975, 6103],
-    [902, 3737, 4349, 9991],
-    [1043, 176, 446, 1803, 2058, 2703, 3558, 7581],
+    [902, 3737, 4349, 4406, 5553, 9991],
+    [1043, 176, 446, 689, 1803, 2058, 2703, 3558, 7581], // King the same as SE
     [1189, 542, 2390, 4062, 9992, 9994],
-    [1634, 1134, 2036, 4319, 9125],
-    [2644, 857, 1518, 1552, 3420, 4292, 7633],
+    [1634, 781, 1134, 2036, 3717, 4319, 9125],
+    [2644, 168, 857, 1518, 1552, 2969, 3420, 4292, 7633],
     [2778, 468, 4156, 4413],
     [3015, 880, 1493, 2431, 2708],
-    [3540, 176, 446, 1803, 2058, 2703, 3558, 7581],
-    [4477, 858, 860, 2383, 2669, 3123],
+    [3540, 176, 446, 689, 1803, 2058, 2703, 3558, 7581],
+    [4477, 238, 277, 858, 860, 2383, 2448, 2669, 3123, 1574],
   ];
 
   const centers = [
@@ -438,6 +439,7 @@ export default defineEventHandler(async (event) => {
     feederSchools = feederGroups.filter((group) => {
       return nhid !== undefined && group.includes(nhid);
     })[0];
+    console.log("Feeder Schools: ", feederSchools);
 
     // This will be any school ids that have the desired program in the feeder group
     feederPrograms = programIds.filter((element) =>
