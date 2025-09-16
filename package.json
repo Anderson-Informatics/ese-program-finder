@@ -13,7 +13,7 @@
     "@nuxt/ui-pro": "^3.0.2",
     "@nuxtjs/leaflet": "^1.2.6",
     "mongoose": "^8.14.1",
-    "nuxt": "^3.16.2",
+    "nuxt": "4.1.1",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0",
     "zod": "^3.24.3"

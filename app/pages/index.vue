@@ -79,12 +79,14 @@ const showResourceRoom = ref<boolean>(false)
 const showCenterBased = ref<boolean>(false)
 const showDualDiagnosed = ref<boolean>(false)
 const showGeneralSupport = ref<boolean>(false)
+const loading = ref<boolean>(false)
 
 const assignedProgram = ref<AssignedProgram | null>(null)
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   console.log(event.data)
   // Reset the reference text and assigned program
+  loading.value = true
   referenceText.value = null
   assignedProgram.value = null
   showGeneralSupport.value = false
@@ -141,13 +143,17 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       ((userAddressPin.value?.[0] ?? 0) + (assignedProgram.value?.location.coordinates?.[1] ?? 0)) / 2,
       ((userAddressPin.value?.[1] ?? 0) + (assignedProgram.value?.location.coordinates?.[0] ?? 0)) / 2
     ]
+    loading.value = false
   } else if (userAddressPin.value) {
     mapCenter.value = userAddressPin.value?.length === 2 && userAddressPin.value[0] !== undefined && userAddressPin.value[1] !== undefined
       ? [userAddressPin.value[0], userAddressPin.value[1]]
       : [42.3797, -83.0925]
+      loading.value = false
   } else {
     mapCenter.value = [42.3797, -83.0925]
+    loading.value = false
   }
+
 }
 
 </script>
@@ -199,7 +205,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
 
           <UFormField
-            v-if="['Autism Spectrum Disorder', 'Mild Cognitive Impaired', 'Moderate Cognitive Impaired'].includes(state.program ?? '')"
+            v-if="['Autism Spectrum Disorder', 'Moderate Cognitive Impaired'].includes(state.program ?? '')"
             name="setting" :validation="schema.shape.setting">
             <USelect class="w-full mt-2" v-model="state.setting" :items="schema.shape.setting.options"
               placeholder="Select the primary educational setting">
@@ -211,9 +217,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </UForm>
         <hr class="mb-6 clear-both text-blue-800" />
         <UPageList class="clear-both">
-          <div v-if="!assignedProgram && !userAddressPin">
+          <div v-if="!assignedProgram && !userAddressPin && !loading">
             <p>Please enter your address, grade, and program to see your
               suggested school.</p>
+          </div>
+          <div v-if="loading">
+            <UProgress size="xl" />
           </div>
           <div v-if="referenceText" class="mb-6">
             <h2 class="text-lg font-bold">Helpful Information</h2>
@@ -282,11 +291,20 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           layer-type="base" name="OpenStreetMap" />
         <LMarker v-if='userAddressPin && userAddressPin.length === 2'
           :lat-lng="[userAddressPin[0] ?? 0, userAddressPin[1] ?? 0]">
-          <l-icon icon-url="/home.png" :icon-size="[60, 60]" />
+          <l-icon icon-url="/home.png" :icon-size="[60, 60]" :icon-anchor="[24, 60]" />
         </LMarker>
         <LMarker v-if='assignedProgram'
           :lat-lng="[assignedProgram.location.coordinates[1], assignedProgram.location.coordinates[0]]">
-          <l-icon icon-url="/school.png" :icon-size="[60, 60]" />
+          <l-icon icon-url="/school.png" :icon-size="[60, 60]" :icon-anchor="[24, 60]" />
+          <LTooltip>
+            <div v-if="assignedProgram">
+            <ULink :to="assignedProgram.url" target="_blank" class="font-bold">{{ assignedProgram['School Name'] }}
+            </ULink>
+            <br />
+            {{ assignedProgram.Address }}<br />
+            {{ assignedProgram['Main office number'] }}
+          </div>
+          </LTooltip>
         </LMarker>
       </LMap>
     </div>
