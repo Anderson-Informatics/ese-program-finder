@@ -25,6 +25,7 @@ const schema: mongoose.Schema = new mongoose.Schema({
   Att_Folder: String,
   url: String,
   "Main office number": String,
+  Distance: Number,
 });
 
 // schools model

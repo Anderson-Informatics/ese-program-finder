@@ -65,6 +65,7 @@ const geocode_address = async (address: string) => {
 
 // Some reactive variables for the map and the results
 const userAddressPin = ref<number[] | null>(null)
+
 interface Program {
   location: {
     coordinates: [number, number];
@@ -82,8 +83,9 @@ const showGeneralSupport = ref<boolean>(false)
 const loading = ref<boolean>(false)
 
 const assignedProgram = ref<Program | null>(null)
-const assignmentMethod = ref<string | null>(null)
+const eligiblePrograms = ref<Program[] | null>(null)
 const activeSchoolId = ref<string | null>(null)
+const assignmentMethod = ref<string | null>(null)
 
 function setMapCenter(program: Program) {
   if (program.location && program.location.coordinates && Array.isArray(program.location.coordinates)) {
@@ -101,6 +103,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true
   referenceText.value = null
   assignedProgram.value = null
+  eligiblePrograms.value = null
   showGeneralSupport.value = false
   showDualDiagnosed.value = false
   showCenterBased.value = false
@@ -122,8 +125,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   // Handle the program assignment
   if (['Day Treatment', 'Visually Impaired'].includes(event.data.program)) {
     showGeneralSupport.value = true
+    assignmentMethod.value = 'Direct to General Support'
   } else if (event.data.program === 'Dual Diagnosed (Emotionally Impaired)') {
     showDualDiagnosed.value = true
+    assignmentMethod.value = 'Direct to General Support for Dual Diagnosed'
   } else if (event.data.grade === 'Post-Secondary') {
     showPostSecondary.value = true
     const program = userAddressPin.value
@@ -153,6 +158,31 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     assignmentMethod.value = program && typeof program[1] === 'string' ? program[1] : null
   }
 
+  // Return all eligible programs
+  if (['Day Treatment', 'Visually Impaired'].includes(event.data.program)) {
+  } else if (event.data.program === 'Dual Diagnosed (Emotionally Impaired)') {
+  } else if (event.data.grade === 'Post-Secondary') {
+    const available = userAddressPin.value
+      ? await $fetch(`/api/programs/list?grade=${event.data.grade}&program=${event.data.program}&lat=${userAddressPin.value[0]}&lng=${userAddressPin.value[1]}&setting=${event.data.setting}`)
+      : null;
+    eligiblePrograms.value = available ? available : null
+  } else if (event.data.program === 'Resource Room') {
+    const available = userAddressPin.value
+      ? await $fetch(`/api/programs/list?grade=${event.data.grade}&program=${event.data.program}&lat=${userAddressPin.value[0]}&lng=${userAddressPin.value[1]}&setting=${event.data.setting}`)
+      : null;
+    eligiblePrograms.value = available ? available : null
+  } else if (event.data.setting === 'Center-Based') {
+    const available = userAddressPin.value
+      ? await $fetch(`/api/programs/list?grade=${event.data.grade}&program=${event.data.program}&lat=${userAddressPin.value[0]}&lng=${userAddressPin.value[1]}&setting=${event.data.setting}`)
+      : null;
+    eligiblePrograms.value = available ? available : null
+  } else {
+    const available = userAddressPin.value
+      ? await $fetch(`/api/programs/list?grade=${event.data.grade}&program=${event.data.program}&lat=${userAddressPin.value[0]}&lng=${userAddressPin.value[1]}&setting=${event.data.setting}`)
+      : null;
+    eligiblePrograms.value = available ? available : null
+  }
+
   // Make the map center between the user address and the assigned program
   if (userAddressPin.value && assignedProgram.value) {
     mapCenter.value = [
@@ -175,13 +205,13 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 </script>
 <template>
   <div class="grid grid-cols-3 h-screen">
-    <div class="md:col-span-1 col-span-3">
+    <div class="md:col-span-1 col-span-3 overflow-y-scroll">
       <img src="/Logo.png" alt="Logo" class="h-20 m-2 float-left" />
       <span class="text-2xl font-bold text-blue-800 block m-4">DPSCD ESE Program
         Finder</span>
       <hr class="mr-6 ml-6 clear-both text-blue-800" />
       <div class="">
-        <h1 class="px-6 ">Find a Program</h1>
+        <h1 class="px-6 pt-6">Find a Program</h1>
         <UForm class="px-6" :state="state" @submit="onSubmit">
           <UPopover mode="click" :content="{
             align: 'end',
@@ -233,7 +263,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </UForm>
         <hr class="mb-6 clear-both text-blue-800" />
         <UPageList class="clear-both">
-          <div v-if="!assignedProgram && !userAddressPin && !loading" class="px-6 ">
+          <div v-if="!assignedProgram && !userAddressPin && !loading" class="px-6">
             <p>Please enter your address, grade, and program to see your
               suggested school.</p>
           </div>
@@ -280,25 +310,38 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             <p>Resource Room programs are available at all DPSCD schools. Your suggested school is the assigned school
               based on the student's home address and grade level.</p>
           </div>
+
           <div v-if="assignedProgram === null && userAddressPin && !loading">
             <h2 class="px-6 text-lg font-bold">Program not Available for Selected Grade</h2>
-            <p class="px-6">You can try to update to the correct program or grade level or please contact the ESE Office of Enrollment by email: <a
-                href="mailto: esespecial.programs@detroitk12.org"
-                class="text-blue-800">esespecial.programs@detroitk12.org</a>
-              or phone: (313) 748-6363.</p>
           </div>
-          <div v-else-if="assignedProgram" class="px-6 my-2 hover:bg-blue-100 transition-colors " @mouseover="setMapCenter(assignedProgram)" @mouseleave="activeSchoolId = null">
+          <div v-else-if="assignedProgram" class="px-6 my-2 hover:bg-blue-100 transition-colors" @mouseover="setMapCenter(assignedProgram)" @mouseleave="activeSchoolId = null">
             <h2 class="text-lg font-bold">Suggested Program</h2>
             <ULink :to="assignedProgram.url" target="_blank" class="font-bold">{{ assignedProgram['School Name'] }}
             </ULink>
             <br />
             {{ assignedProgram.Address }}<br />
-            {{ assignedProgram['Main office number'] }}
+            {{ assignedProgram['Main office number'] }}<br />
+            {{ assignedProgram.Distance.toFixed(1) }} miles away<br />
+            {{ assignmentMethod }}
+          </div>
+          <div v-if="eligiblePrograms === undefined">
+            <h2 class="px-6 text-lg font-bold">No Other Eligible Programs</h2>
+          </div>
+          <div v-else-if="eligiblePrograms && eligiblePrograms.length > 0" class="mt-6">
+            <h2 class="px-6 text-lg font-bold">Other Eligible Programs</h2>
+            <div v-for="program in eligiblePrograms" :key="program['SchoolID']" class="px-6 my-2 hover:bg-blue-100 transition-colors" @mouseover="setMapCenter(program)" @mouseleave="activeSchoolId = null">
+              <ULink :to="program.url" target="_blank" class="font-bold">{{ program['School Name'] }}
+              </ULink>
+              <br />
+              <span class="text-sm">{{ program.Address }}</span><br />
+              <span class="text-sm">{{ program['Main office number'] }}</span><br />
+              {{ program.Distance.toFixed(1) }} miles away
+            </div>
           </div>
         </UPageList>
       </div>
     </div>
-    <div class="hidden col-span-2 md:block relative">
+    <div class="hidden col-span-2 fixed md:block relative">
       <div v-if="!assignedProgram && !userAddressPin"
         class="m-auto p-6 w-3/5 h-3/5 bg-white opacity-75 rounded-lg absolute z-10 inset-20">
         <p class="opacity-100 p-6 text-2xl text-gray-950 justify-center text-center"><em>Please enter the student's
@@ -328,6 +371,22 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </div>
           </LTooltip>
         </LMarker>
+        <div v-if="eligiblePrograms === undefined"></div>
+        <div v-else-if="eligiblePrograms && eligiblePrograms.length > 0">
+          <LMarker v-for="program in eligiblePrograms" :key="program['SchoolID']"
+            :lat-lng="[program.location.coordinates[1], program.location.coordinates[0]]" @mouseover="setActiveSchool(program)" @mouseout="activeSchoolId = null">
+            <l-icon icon-url="/school-grey.png" :icon-size="[40, 40]" :icon-anchor="[16, 40]" />
+            <LTooltip v-if="activeSchoolId == program['SchoolID']" :options="{ permanent: true, direction: 'bottom' }">
+              <div v-if="program">
+                <ULink :to="program.url" target="_blank" class="font-bold">{{ program['School Name'] }}
+                </ULink>
+                <br />
+                {{ program.Address }}<br />
+                {{ program['Main office number'] }}<br />
+              </div>
+            </LTooltip>
+          </LMarker>
+        </div>
       </LMap>
     </div>
   </div>

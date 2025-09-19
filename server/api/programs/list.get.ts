@@ -17,8 +17,8 @@ export default defineEventHandler(async (event) => {
     keyof (typeof grade_band_map)[keyof typeof grade_band_map]
   > = {
     "Birth to 3": "B3",
-    PreK: "PreK",
-    Kindergarten: "K",
+    "PreK": "PreK",
+    "Kindergarten": "K",
     "1st grade": "1",
     "2nd grade": "2",
     "3rd grade": "3",
@@ -376,50 +376,95 @@ export default defineEventHandler(async (event) => {
   const programIdStrings = programs.map((item) => item.SchoolID.toString());
 
   // Now for the fun logic of making the program assignment
-  const find_nearest_school = async (
+    const find_nearest_school = async (
     lat: number,
     lng: number,
     schids: string[]
   ): Promise<any[]> => {
     const coordinates: [number, number] = [ Number(lng), Number(lat) ];
     let nearest = await SchoolModel.aggregate([
-      {
-          '$geoNear': {
-          'near': {
-              'type': 'Point', 
-              'coordinates': coordinates
-          }, 
-          'key': 'location', 
-          'spherical': true, 
-          'distanceField': 'Distance', 
-          'distanceMultiplier': 0.000621371
-          }
-      }, {
-          '$match': {
-          'SchoolID': {
-              '$in': schids
-          }
-          }
-      }, {
-          '$project': {
-              'location': 1,
-              'SchoolID': 1, 
-              'School Name': 1,
-              'Address': 1,
-              'Main office number': 1,
-              'Type': 1,
-              'url': 1,
-              'Distance': 1
-          }
-      }, {
-          '$sort': {
-          'Distance': 1
-          }
-      }, {
-        '$limit': 1
-      }
-      ]);
-    return nearest;
+        {
+            '$geoNear': {
+            'near': {
+                'type': 'Point', 
+                'coordinates': coordinates
+            }, 
+            'key': 'location', 
+            'spherical': true, 
+            'distanceField': 'Distance', 
+            'distanceMultiplier': 0.000621371
+            }
+        }, {
+            '$match': {
+            'SchoolID': {
+                '$in': schids
+            }
+            }
+        }, {
+            '$project': {
+                'location': 1,
+                'SchoolID': 1, 
+                'School Name': 1,
+                'Address': 1,
+                'Main office number': 1,
+                'Type': 1,
+                'url': 1,
+                'Distance': 1
+            }
+        }, {
+            '$sort': {
+            'Distance': 1
+            }
+        }, {
+          '$limit': 1
+        }
+        ]);
+      return nearest;
+    };
+
+  // This will return the full list of available programs with their distance
+  const find_programs = async (
+    lat: number,
+    lng: number,
+    schids: string[]
+  ): Promise<any[]> => {
+    const coordinates: [number, number] = [ Number(lng), Number(lat) ];
+    let available = await SchoolModel.aggregate([
+        {
+            '$geoNear': {
+            'near': {
+                'type': 'Point', 
+                'coordinates': coordinates
+            }, 
+            'key': 'location', 
+            'spherical': true, 
+            'distanceField': 'Distance', 
+            'distanceMultiplier': 0.000621371
+            }
+        }, {
+            '$match': {
+            'SchoolID': {
+                '$in': schids
+            }
+            }
+        }, {
+            '$project': {
+                'location': 1,
+                'SchoolID': 1, 
+                'School Name': 1,
+                'Address': 1,
+                'Main office number': 1,
+                'Type': 1,
+                'url': 1,
+                'Distance': 1
+            }
+        }, {
+            '$sort': {
+            'Distance': 1
+            }
+        }
+        ]);
+    return available;
   };
 
   // These are the full feeder groups of the neighborhood schools
@@ -464,55 +509,46 @@ export default defineEventHandler(async (event) => {
   }
 
   let assignment = null;
-  let assignmentMethod = null;
   if (["RR"].includes(programKey)) {
-    if (nhid) {
-      assignment = await find_nearest_school(lat, lng, [ nhid.toString() ]) // Neighborhood school $fetch(`/api/schools?SchoolID=${nhid}`);
-      assignmentMethod = "Assigned to Neighborhood School";
-    } else {
-      assignment = [];
-      assignmentMethod = "No Neighborhood School Found";
-    }
+    assignment = await $fetch(`/api/schools?SchoolID=${nhid}`); // Neighborhood school
   } else if (["EINT"].includes(programKey)) {
-    assignment = await find_nearest_school(lat, lng, [ '209594' ]) // $fetch(`/api/schools?SchoolID=209594`); // EIDC
-    assignmentMethod = "Assigned to EIDC";
+    assignment = await $fetch(`/api/schools?SchoolID=209594`); // EIDC
   } else if (["SCI", "SMI"].includes(programKey)) {
     if (gradeBand === "PK-8") {
-      assignment = await find_nearest_school(lat, lng, [ '9594', '8951' ]); // Keidan or Moses Field
-      assignmentMethod = "SCI/SMI Assigned to Nearest Center-Based School";
+      assignment = await find_nearest_school(lat, lng, ['9594', '8951']); // Keidan or Moses Field
     } else if (gradeBand === "9-12") {
-      assignment = await find_nearest_school(lat, lng, [ '9592' ]) // $fetch(`/api/schools?SchoolID=9592`); // Jerry White
-      assignmentMethod = "SCI/SMI Assigned to Jerry White";
+      assignment = await $fetch(`/api/schools?SchoolID=9592`); // Jerry White
     } else if (gradeBand === "14") {
-      assignment = await find_nearest_school(lat, lng, [ '859' ]) // $fetch(`/api/schools?SchoolID=859`); // Drew
-      assignmentMethod = "SCI/SMI Assigned to Drew";
+      assignment = await $fetch(`/api/schools?SchoolID=859`); // Drew
     } else {
       assignment = [];
-      assignmentMethod = "SCI/SMI No Assignment Found";
     }
   } else if (setting === "Center-Based") {
     if (["PK-5", "6-8", "PK-2", "3-5"].includes(gradeBand)) {
       assignment = await find_nearest_school(lat, lng, ['9594', '8951']); // Keidan or Moses Field
-      assignmentMethod = "Center-Based Assigned to Nearest Center-Based School";
     } else if (gradeBand === "9-12") {
-      assignment = await find_nearest_school(lat, lng, [ '9592' ]) // $fetch(`/api/schools?SchoolID=9592`); // Jerry White
-      assignmentMethod = "Center-Based Assigned to Jerry White";
+      assignment = await $fetch(`/api/schools?SchoolID=9592`); // Jerry White
     } else if (gradeBand === "14") {
-      assignment = await find_nearest_school(lat, lng, [ '859' ]) // $fetch(`/api/schools?SchoolID=859`); // Drew
-      assignmentMethod = "Center-Based Assigned to Drew";
+      assignment = await $fetch(`/api/schools?SchoolID=859`); // Drew
     }
   } else if (nhid && programIds.includes(nhid)) {
-    assignment = await find_nearest_school(lat, lng, [ nhid.toString() ]) // $fetch(`/api/schools?SchoolID=${nhid}`);
-    assignmentMethod = "Assigned to Neighborhood School with Program";
+    assignment = await $fetch(`/api/schools?SchoolID=${nhid}`);
   } else if (feederPrograms.length > 0) {
     assignment = await find_nearest_school(lat, lng, feederPrograms.map((item) => item.toString()));
-    assignmentMethod = "Assigned to Nearest School in Feeder Group with Program";
   } else if (program === "DT") {
     assignment = await find_nearest_school(lat, lng, programIdStrings);
-    assignmentMethod = "DT Assigned to Nearest School with Program";
   } else {
     assignment = await find_nearest_school(lat, lng, programIdStrings);
-    assignmentMethod = "Assigned to Nearest School with Program";
   }
-  return [assignment, assignmentMethod];
+
+  let available = null;
+  if (programIdStrings) {
+    available = await find_programs(lat, lng, programIdStrings);
+  }
+  if (assignment !== null && available !== null) {
+    available = available.filter(function( obj ) {
+      return obj.SchoolID !== assignment[0].SchoolID;
+    });
+  }
+  return available;
 });
