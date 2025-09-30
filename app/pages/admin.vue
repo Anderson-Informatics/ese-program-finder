@@ -97,6 +97,26 @@ function setActiveSchool(program: Program) {
   activeSchoolId.value = program['SchoolID'] ?? null
 }
 
+function setPinUrl(available: number) {
+  if (available > 0) {
+    return '/school-green.png'
+  } else if (available == 0) {
+    return '/school-grey.png'
+  } else {
+    return '/school-red.png'
+  }
+}
+
+function setMainPinUrl(available: number) {
+  if (available > 0) {
+    return '/school-main-green.png'
+  } else if (available == 0) {
+    return '/school-main-grey.png'
+  } else {
+    return '/school-main-red.png'
+  }
+}
+
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   console.log(event.data)
   // Reset the reference text and assigned program
@@ -323,6 +343,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             {{ assignedProgram['Main office number'] }}<br />
             {{ assignedProgram.Distance.toFixed(1) }} miles away<br />
             {{ assignmentMethod }}
+            <div v-if="assignedProgram.ProgramSummary">
+              {{ assignedProgram.ProgramSummary.Capacity }} capacity, {{ assignedProgram.ProgramSummary.Enrolled }} enrolled, {{ assignedProgram.ProgramSummary.Remaining }} available
+            </div>
           </div>
           <div v-if="eligiblePrograms === undefined">
             <h2 class="px-6 text-lg font-bold">No Other Eligible Programs</h2>
@@ -336,6 +359,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               <span class="text-sm">{{ program.Address }}</span><br />
               <span class="text-sm">{{ program['Main office number'] }}</span><br />
               {{ program.Distance.toFixed(1) }} miles away
+              <div v-if="assignedProgram.ProgramSummary">
+                {{ program.ProgramSummary.Capacity }} capacity, {{ program.ProgramSummary.Enrolled }} enrolled, {{ program.ProgramSummary.Remaining }} available
+              </div>
             </div>
           </div>
         </UPageList>
@@ -360,7 +386,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </LMarker>
         <LMarker v-if='assignedProgram'
           :lat-lng="[assignedProgram.location.coordinates[1], assignedProgram.location.coordinates[0]]" @mouseover="setActiveSchool(assignedProgram)" @mouseout="activeSchoolId = null">
-          <l-icon icon-url="/school.png" :icon-size="[60, 60]" :icon-anchor="[24, 60]" />
+          <l-icon :icon-url="setMainPinUrl(assignedProgram.ProgramSummary.Remaining)" :icon-size="[60, 60]" :icon-anchor="[24, 60]" />
           <LTooltip v-if="activeSchoolId == assignedProgram['SchoolID']" :options="{ permanent: true, direction: 'bottom' }">
             <div v-if="assignedProgram">
             <ULink :to="assignedProgram.url" target="_blank" class="font-bold">{{ assignedProgram['School Name'] }}
@@ -375,7 +401,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         <div v-else-if="eligiblePrograms && eligiblePrograms.length > 0">
           <LMarker v-for="program in eligiblePrograms" :key="program['SchoolID']"
             :lat-lng="[program.location.coordinates[1], program.location.coordinates[0]]" @mouseover="setActiveSchool(program)" @mouseout="activeSchoolId = null">
-            <l-icon icon-url="/school-grey.png" :icon-size="[40, 40]" :icon-anchor="[16, 40]" />
+            <l-icon :icon-url="setPinUrl(program.ProgramSummary.Remaining)" :icon-size="[40, 40]" :icon-anchor="[16, 40]" />
             <LTooltip v-if="activeSchoolId == program['SchoolID']" :options="{ permanent: true, direction: 'bottom' }">
               <div v-if="program">
                 <ULink :to="program.url" target="_blank" class="font-bold">{{ program['School Name'] }}

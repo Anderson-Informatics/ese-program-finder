@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
   devtools: { enabled: true },
   ssr: false,
-  modules: ["@nuxt/ui-pro", "@nuxtjs/leaflet"],
+  modules: ["@nuxt/ui", "@nuxtjs/leaflet"],
   css: ["~/assets/css/main.css"],
   future: {
     compatibilityVersion: 4,

@@ -1,5 +1,6 @@
 import ProgramModel from "~~/server/models/program.model";
 import SchoolModel from "~~/server/models/school.model";
+import SummaryModel from "~~/server/models/summary.model";
 
 export default defineEventHandler(async (event) => {
   // Get the query parameters from the request
@@ -418,7 +419,7 @@ export default defineEventHandler(async (event) => {
       }, {
         '$limit': 1
       }
-      ]);
+      ]);    
     return nearest;
   };
 
@@ -514,5 +515,30 @@ export default defineEventHandler(async (event) => {
     assignment = await find_nearest_school(lat, lng, programIdStrings);
     assignmentMethod = "Assigned to Nearest School with Program";
   }
+
+  // Wait for above promises to resolve then add Program Summary to each school
+  if (assignment && assignment.length > 0) {
+    for (let i = 0; i < assignment.length; i++) {
+      const school = assignment[i];
+      try {
+        const summary = await SummaryModel.findOne(
+          {
+            SchoolID: parseInt(school.SchoolID),
+            Program: programKey,
+            GradeBand: gradeBand,
+          },
+          { _id: 0, __v: 0 }
+        ).lean();
+        school.ProgramSummary = summary;
+      } catch (error) {
+        console.error(
+          `Error fetching program summary for SchoolID ${school.SchoolID}: `,
+          error
+        );
+        school.ProgramSummary = null;
+      }
+    }
+  }
+
   return [assignment, assignmentMethod];
 });

@@ -18,6 +18,15 @@ const schema: mongoose.Schema = new mongoose.Schema({
   EI: Object,
   VI: Object,
   DHH: Object,
+  ProgramSummary: {
+    SchoolID: Number,
+    Program: String,
+    GradeBand: String,
+    ProgramCount: Number,
+    Capacity: Number,
+    Remaining: Number,
+    Enrolled: Number,
+  },
 });
 
 // programs model

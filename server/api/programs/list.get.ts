@@ -1,5 +1,6 @@
 import ProgramModel from "~~/server/models/program.model";
 import SchoolModel from "~~/server/models/school.model";
+import SummaryModel from "~~/server/models/summary.model";
 
 export default defineEventHandler(async (event) => {
   // Get the query parameters from the request
@@ -550,5 +551,49 @@ export default defineEventHandler(async (event) => {
       return obj.SchoolID !== assignment[0].SchoolID;
     });
   }
+
+  // Start to retrieve program summary data for available programs
+  if (available && available.length > 0) {
+    for (let i = 0; i < available.length; i++) {
+      const school = available[i];
+      try {
+        const summary = await SummaryModel.findOne(
+          {
+            SchoolID: parseInt(school.SchoolID),
+            Program: programKey,
+            GradeBand: gradeBand,
+          },
+          { _id: 0, __v: 0 }
+        ).lean();
+        if (summary) {
+          school.ProgramSummary = summary;
+        } else {
+          school.ProgramSummary = {
+            SchoolID: parseInt(school.SchoolID),
+            Program: programKey,
+            GradeBand: gradeBand,
+            ProgramCount: 0,
+            Capacity: 0,
+            Remaining: 0,
+            Enrolled: 0,
+          };
+        }
+      } catch (error) {
+        console.error(
+          `Error retrieving program summary for SchoolID ${school.SchoolID}: `,
+          error );
+        school.ProgramSummary = {
+          SchoolID: parseInt(school.SchoolID),
+          Program: programKey,
+          GradeBand: gradeBand,
+          ProgramCount: 0,
+          Capacity: 0,
+          Remaining: 0,
+          Enrolled: 0,
+        };
+      }
+    }
+  }
+
   return available;
 });
