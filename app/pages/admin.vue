@@ -344,7 +344,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             {{ assignedProgram.Distance.toFixed(1) }} miles away<br />
             {{ assignmentMethod }}
             <div v-if="assignedProgram.ProgramSummary">
-              {{ assignedProgram.ProgramSummary.Capacity }} capacity, {{ assignedProgram.ProgramSummary.Enrolled }} enrolled, {{ assignedProgram.ProgramSummary.Remaining }} available
+              {{ assignedProgram.ProgramSummary.Capacity }} capacity, {{ assignedProgram.ProgramSummary.Enrolled }} enrolled, {{ assignedProgram.ProgramSummary.Remaining }} available<br />
+              at {{ assignedProgram.GradeBand }} for {{ assignedProgram.Program }}
             </div>
           </div>
           <div v-if="eligiblePrograms === undefined">
@@ -359,8 +360,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               <span class="text-sm">{{ program.Address }}</span><br />
               <span class="text-sm">{{ program['Main office number'] }}</span><br />
               {{ program.Distance.toFixed(1) }} miles away
-              <div v-if="assignedProgram.ProgramSummary">
-                {{ program.ProgramSummary.Capacity }} capacity, {{ program.ProgramSummary.Enrolled }} enrolled, {{ program.ProgramSummary.Remaining }} available
+              <div v-if="assignedProgram && assignedProgram.ProgramSummary">
+                {{ program.ProgramSummary.Capacity }} capacity, {{ program.ProgramSummary.Enrolled }} enrolled, {{ program.ProgramSummary.Remaining }} available<br />
+                at {{ program.ProgramSummary.GradeBand }} for {{ program.ProgramSummary.Program }}
               </div>
             </div>
           </div>

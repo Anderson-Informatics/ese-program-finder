@@ -540,5 +540,14 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  // Add the GradeBand to the assignment result
+  if (assignment && assignment.length > 0) {
+    assignment = assignment.map((school) => ({
+      ...school,
+      GradeBand: gradeBand,
+      Program: programKey,
+    }));
+  }
+
   return [assignment, assignmentMethod];
 });
