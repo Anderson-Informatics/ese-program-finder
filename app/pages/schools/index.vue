@@ -121,7 +121,15 @@ async function fetchForProgram() {
     const res = await $fetch(
       `/api/programs/byProgram?program=${encodeURIComponent(selected.value)}`,
     );
-    rows.value = Array.isArray(res) ? res : [];
+    // If the server returned a non-empty array, use it. If it returned
+    // an empty array, don't overwrite any existing rows that may have
+    // been rendered on the server to avoid a flicker where the list
+    // briefly appears then disappears due to a client-side empty fetch.
+    if (Array.isArray(res) && res.length > 0) {
+      rows.value = res;
+    } else if (!Array.isArray(res) && rows.value.length === 0) {
+      rows.value = [];
+    }
   } catch (err) {
     console.error("Error fetching program list", err);
     rows.value = [];
