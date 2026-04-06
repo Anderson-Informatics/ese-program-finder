@@ -1926,6 +1926,13 @@
   dependencies:
     "@types/geojson" "*"
 
+"@types/node@^25.5.2":
+  version "25.5.2"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-25.5.2.tgz#94861e32f9ffd8de10b52bbec403465c84fff762"
+  integrity sha512-tO4ZIRKNC+MDWV4qKVZe3Ql/woTnmHDr5JD8UI5hn2pwBrHEwOEMZK7WlNb5RKB6EoJ02gwmQS9OrjuFnZYdpg==
+  dependencies:
+    undici-types "~7.18.0"
+
 "@types/parse-path@^7.0.0":
   version "7.1.0"
   resolved "https://registry.yarnpkg.com/@types/parse-path/-/parse-path-7.1.0.tgz#1bdddfe4fb2038e76c7e622234a97d6a050a1be3"
@@ -5749,6 +5756,11 @@ type-level-regexp@~0.1.17:
   resolved "https://registry.yarnpkg.com/type-level-regexp/-/type-level-regexp-0.1.17.tgz#ec1bf7dd65b85201f9863031d6f023bdefc2410f"
   integrity sha512-wTk4DH3cxwk196uGLK/E9pE45aLfeKJacKmcEgEOA/q5dnPGNxXt0cfYdFxb57L+sEpf1oJH4Dnx/pnRcku9jg==
 
+typescript@^6.0.2:
+  version "6.0.2"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-6.0.2.tgz#0b1bfb15f68c64b97032f3d78abbf98bdbba501f"
+  integrity sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ==
+
 ufo@1.6.1, ufo@^1.5.4, ufo@^1.6.1:
   version "1.6.1"
   resolved "https://registry.yarnpkg.com/ufo/-/ufo-1.6.1.tgz#ac2db1d54614d1b22c1d603e3aef44a85d8f146b"
@@ -5773,6 +5785,11 @@ unctx@^2.4.1:
     estree-walker "^3.0.3"
     magic-string "^0.30.17"
     unplugin "^2.1.0"
+
+undici-types@~7.18.0:
+  version "7.18.2"
+  resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-7.18.2.tgz#29357a89e7b7ca4aef3bf0fd3fd0cd73884229e9"
+  integrity sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==
 
 unenv@^2.0.0-rc.19, unenv@^2.0.0-rc.21:
   version "2.0.0-rc.21"

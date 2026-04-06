@@ -60,21 +60,18 @@ export default defineEventHandler(async (event) => {
   console.log("Grade: ", grade);
   console.log("Grade Key: ", gradeKey);
 
-  let nhschoolData;
+  let nhschoolData: any[] | undefined;
   let nhid: number | undefined;
 
-  if (["Birth to 3", "PreK", "Post-Secondary"].includes(grade)) {
-  } else {
+  if (!["Birth to 3", "PreK", "Post-Secondary"].includes(grade)) {
     // Get the assigned neighborhood school
     nhschoolData = await $fetch(
       `/api/boundaries?lat=${lat}&lng=${lng}&grade=${gradeKey}`
     );
-    nhid = nhschoolData.filter((item) => {
-      // Filter out the schools that are not in the same program
-      if (item.Type === "Neighborhood") {
-        return item;
-      }
-    })[0].SchoolID;
+    if (Array.isArray(nhschoolData)) {
+      const nh = nhschoolData.find((item: any) => item && item.Type === "Neighborhood");
+      if (nh && nh.SchoolID !== undefined) nhid = Number(nh.SchoolID);
+    }
     console.log("Neighborhood School ID: ", nhid);
   }
 
@@ -353,6 +350,10 @@ export default defineEventHandler(async (event) => {
 
   // Get the grade band for the given program and grade
   let gradeBand: string | undefined;
+  if (!programKey || !gradeKey) {
+    console.error("Invalid program or grade: missing programKey or gradeKey", { program, grade });
+    return [];
+  }
   if (
     programKey in grade_band_map &&
     gradeKey in grade_band_map[programKey as keyof typeof grade_band_map]
@@ -494,27 +495,22 @@ export default defineEventHandler(async (event) => {
 
   let feederSchools: number[] = [];
   let feederPrograms: number[] = [];
-  if (["Birth to 3", "PreK", "Post-Secondary"].includes(grade)) {
-    // Do nothing, no neighborhood schools for these grades
-  } else {
+  if (!["Birth to 3", "PreK", "Post-Secondary"].includes(grade)) {
     // This is the feeder group of the neighborhood school
-    feederSchools = feederGroups.filter((group) => {
-      return nhid !== undefined && group.includes(nhid);
-    })[0];
-    console.log("Feeder Schools: ", feederSchools);
+    const found = feederGroups.find((group) => nhid !== undefined && group.includes(nhid as number));
+    const feederSchoolsArr = found || [];
+    console.log("Feeder Schools: ", feederSchoolsArr);
 
     // This will be any school ids that have the desired program in the feeder group
-    feederPrograms = programIds.filter((element) =>
-      feederSchools.includes(element)
-    );
+    feederPrograms = programIds.filter((element) => feederSchoolsArr.includes(element));
   }
 
   let assignment = null;
-  if (["RR"].includes(programKey)) {
+  if (programKey && ["RR"].includes(programKey)) {
     assignment = await $fetch(`/api/schools?SchoolID=${nhid}`); // Neighborhood school
-  } else if (["EINT"].includes(programKey)) {
+  } else if (programKey && ["EINT"].includes(programKey)) {
     assignment = await $fetch(`/api/schools?SchoolID=209594`); // EIDC
-  } else if (["SCI", "SMI"].includes(programKey)) {
+  } else if (programKey && ["SCI", "SMI"].includes(programKey)) {
     if (gradeBand === "PK-8") {
       assignment = await find_nearest_school(lat, lng, ['9594', '8951']); // Keidan or Moses Field
     } else if (gradeBand === "9-12") {
@@ -525,7 +521,7 @@ export default defineEventHandler(async (event) => {
       assignment = [];
     }
   } else if (setting === "Center-Based") {
-    if (["PK-5", "6-8", "PK-2", "3-5"].includes(gradeBand)) {
+    if (gradeBand && ["PK-5", "6-8", "PK-2", "3-5"].includes(gradeBand)) {
       assignment = await find_nearest_school(lat, lng, ['9594', '8951']); // Keidan or Moses Field
     } else if (gradeBand === "9-12") {
       assignment = await $fetch(`/api/schools?SchoolID=9592`); // Jerry White
@@ -547,9 +543,11 @@ export default defineEventHandler(async (event) => {
     available = await find_programs(lat, lng, programIdStrings);
   }
   if (assignment !== null && available !== null) {
-    available = available.filter(function( obj ) {
-      return obj.SchoolID !== assignment[0].SchoolID;
-    });
+    if (Array.isArray(assignment) && assignment.length > 0) {
+      available = available.filter(function( obj ) {
+        return obj.SchoolID !== assignment[0].SchoolID;
+      });
+    }
   }
 
   // Start to retrieve program summary data for available programs

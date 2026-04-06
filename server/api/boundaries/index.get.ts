@@ -84,13 +84,13 @@ export default defineEventHandler(async (event) => {
 
   let neigh: Partial<School> = {};
 
-  if (parsedGrade <= elem.High_Grade) {
+  if (elem && typeof elem.High_Grade === 'number' && parsedGrade <= elem.High_Grade) {
     neigh = { ...elem };
     neigh.Type = "Neighborhood";
-  } else if (parsedGrade <= mid.High_Grade) {
+  } else if (mid && typeof mid.High_Grade === 'number' && parsedGrade <= mid.High_Grade) {
     neigh = { ...mid };
     neigh.Type = "Neighborhood";
-  } else if (parsedGrade <= high.High_Grade) {
+  } else if (high && typeof high.High_Grade === 'number' && parsedGrade <= high.High_Grade) {
     neigh = { ...high };
     neigh.Type = "Neighborhood";
   } else {
