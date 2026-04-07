@@ -23,6 +23,61 @@ const loading = ref(true);
 const message = ref<string | null>(null);
 const messageColor = ref<"success" | "warning" | "info">("success");
 
+// compute latest LastUpdated from summaries attached to programDoc
+const lastUpdated = computed(() => {
+  try {
+    const sums =
+      (programDoc.value && (programDoc.value as any)._summaries) || {};
+    let latest: number | null = null;
+    for (const prog of Object.values(sums)) {
+      for (const bandSummary of Object.values(prog as Record<string, any>)) {
+        const d = (bandSummary as any).LastUpdated;
+        if (!d) continue;
+        const t =
+          typeof d === "string"
+            ? Date.parse(d)
+            : d instanceof Date
+              ? d.getTime()
+              : Number(d);
+        if (Number.isFinite(t)) {
+          if (latest === null || t > latest) latest = t;
+        }
+      }
+    }
+    return latest ? new Date(latest) : null;
+  } catch (e) {
+    return null;
+  }
+});
+
+const lastUpdatedDisplay = computed(() => {
+  // Prefer server-provided pre-formatted Eastern timestamp when available
+  try {
+    const srv =
+      programDoc.value && (programDoc.value as any).lastUpdatedEastern;
+    if (srv) return String(srv);
+  } catch (e) {
+    /* ignore */
+  }
+
+  if (!lastUpdated.value) return null;
+  try {
+    return lastUpdated.value.toLocaleString("en-US", {
+      timeZone: "America/Detroit",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+      timeZoneName: "short",
+    });
+  } catch (e) {
+    return lastUpdated.value.toLocaleString();
+  }
+});
+
 // schools selector state
 const schools = ref<Array<any>>([]);
 const selectedSchool = ref<string>("");
@@ -273,6 +328,9 @@ function onError(payload: any) {
                   school?.SchoolName ||
                   "School " + schoolId
                 }}
+              </div>
+              <div v-if="lastUpdatedDisplay" class="text-sm text-slate-600">
+                Last updated: {{ lastUpdatedDisplay }}
               </div>
             </div>
             <div class="text-sm text-slate-600">SchoolID: {{ schoolId }}</div>

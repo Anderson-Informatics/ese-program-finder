@@ -13,6 +13,7 @@ const schema: mongoose.Schema = new mongoose.Schema({
   Capacity: Number,
   Remaining: Number,
   Enrolled: Number,
+  LastUpdated: Date,
 });
 
 // program summary model

@@ -85,6 +85,17 @@ const progressColor = computed(() => {
   return "#16a34a"; // green
 });
 
+function progressColorBand(entry: any) {
+  const cap = entry?.Capacity ?? 0;
+  const en = entry?.Enrolled ?? 0;
+  if (cap <= 0) return "#16a34a";
+  const p = Math.round((en / cap) * 100);
+  if (p >= 100) return "#dc2626";
+  if (p >= 90) return "#f97316";
+  if (p >= 75) return "#f59e0b";
+  return "#16a34a";
+}
+
 function initCounts() {
   const obj: Record<string, number> = {};
   for (const b of props.bands) {
@@ -142,7 +153,9 @@ async function save() {
             :class="['total-value', { changed: editedTotal !== currentTotal }]"
           >
             {{ editedTotal }}
-            <small v-if="currentTotal !== null">(was {{ currentTotal }})</small>
+            <small v-if="currentTotal !== null && editedTotal !== currentTotal"
+              >(was {{ currentTotal }})</small
+            >
           </div>
         </div>
       </div>
@@ -170,11 +183,34 @@ async function save() {
             class="u-input"
           />
         </UFormField>
-        <div class="band-summary" v-if="programSummaries[band]">
-          <small>cap: {{ programSummaries[band].Capacity || 0 }}</small>
-          <small style="margin-left: 8px"
-            >enrolled: {{ programSummaries[band].Enrolled || 0 }}</small
-          >
+        <div
+          class="band-summary"
+          v-if="programSummaries[band] && programSummaries[band].Capacity > 0"
+        >
+          <div class="band-progress">
+            <div
+              class="band-progress-fill"
+              :style="{
+                width:
+                  Math.round(
+                    ((programSummaries[band].Enrolled || 0) /
+                      (programSummaries[band].Capacity || 1)) *
+                      100,
+                  ) + '%',
+                background: progressColorBand(programSummaries[band]),
+              }"
+            ></div>
+          </div>
+          <div class="progress-text-small">
+            {{ programSummaries[band].Enrolled || 0 }} /
+            {{ programSummaries[band].Capacity || 0 }} ({{
+              Math.round(
+                ((programSummaries[band].Enrolled || 0) /
+                  (programSummaries[band].Capacity || 1)) *
+                  100,
+              )
+            }}%)
+          </div>
         </div>
       </div>
     </div>
@@ -191,9 +227,13 @@ async function save() {
           </ul>
         </div>
         <div>
-          <UButton :disabled="!dirty || saving" color="primary" @click="save">{{
-            saving ? "Saving..." : "Save"
-          }}</UButton>
+          <UButton
+            class="mr-2"
+            :disabled="!dirty || saving"
+            color="primary"
+            @click="save"
+            >{{ saving ? "Saving..." : "Save" }}</UButton
+          >
           <UButton :disabled="saving" color="neutral" @click="reset"
             >Reset</UButton
           >
@@ -262,6 +302,10 @@ async function save() {
   gap: 8px;
   justify-content: flex-end;
 }
+.footer-left {
+  flex: 1 1 auto;
+  text-align: left;
+}
 .u-input {
   width: 120px;
 }
@@ -284,8 +328,8 @@ async function save() {
 }
 .row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-end;
+  justify-content: flex-start;
   gap: 12px;
 }
 
@@ -307,9 +351,34 @@ async function save() {
 
 .band-summary {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 2px;
+  font-size: 0.8rem;
   color: var(--gray-600);
+  flex: 1 1 auto;
+  margin-left: 8px;
+}
+
+.band-progress {
+  width: 100%;
+  height: 8px;
+  background: #eee;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 0px;
+}
+.band-progress-fill {
+  height: 100%;
+  width: 0%;
+  transition: width 300ms ease;
+}
+.progress-text-small {
+  font-size: 0.75rem;
+  color: var(--gray-600);
+  margin-top: 0px;
+  text-align: right;
+  width: 100%;
 }
 </style>

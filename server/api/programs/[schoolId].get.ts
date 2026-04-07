@@ -46,6 +46,56 @@ export default defineEventHandler(async (event) => {
 
     // Attach to program response under a non-conflicting key
     (program as any)._summaries = summariesMap;
+    // Compute latest LastUpdated across summaries.
+    try {
+      let bestEpoch: number | null = null;
+      let bestComp: { y: number; mo: number; d: number; h: number; m: number; s: number } | null = null;
+      for (const s of summaries) {
+        const lu = (s as any).LastUpdated;
+        if (!lu) continue;
+        const d = new Date(lu);
+        // The data is stored with UTC timezone but actually represents Eastern local time.
+        // We will read the UTC components (which correspond to the intended Eastern components)
+        // and use Date.UTC(...) for ordering and formatting.
+        const y = d.getUTCFullYear();
+        const mo = d.getUTCMonth();
+        const dd = d.getUTCDate();
+        const hh = d.getUTCHours();
+        const mm = d.getUTCMinutes();
+        const ss = d.getUTCSeconds();
+        const epoch = Date.UTC(y, mo, dd, hh, mm, ss);
+        if (bestEpoch === null || epoch > bestEpoch) {
+          bestEpoch = epoch;
+          bestComp = { y, mo, d: dd, h: hh, m: mm, s: ss };
+        }
+      }
+      if (bestComp) {
+        const months = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
+        const pad2 = (n: number) => String(n).padStart(2, "0");
+        const hr12 = bestComp.h % 12 === 0 ? 12 : bestComp.h % 12;
+        const ampm = bestComp.h >= 12 ? "PM" : "AM";
+        const formatted = `${months[bestComp.mo]} ${bestComp.d}, ${bestComp.y}, ${String(
+          hr12
+        ).padStart(2, "0")}:${pad2(bestComp.m)}:${pad2(bestComp.s)} ${ampm} ET`;
+        (program as any).lastUpdatedEastern = formatted;
+        (program as any)._lastUpdatedEasternEpoch = bestEpoch;
+      }
+    } catch (err) {
+      /* ignore formatting errors */
+    }
   } catch (err) {
     console.error("Error fetching summary docs:", err);
     // Non-fatal: continue without summaries
