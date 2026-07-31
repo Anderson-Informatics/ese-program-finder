@@ -66,6 +66,178 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": ["Boundaries"],
+        "summary": "Bulk lookup for up to 25 students (admin only)",
+        "operationId": "bulkBoundaryLookup",
+        "security": [{ "AdminPasswordHeader": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "maxItems": 25,
+                "items": { "$ref": "#/components/schemas/BulkBoundaryRequest" }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Array of assignment arrays, one per input student",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/BulkBoundaryResponse" }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid input" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/api/boundaries/jobs": {
+      "post": {
+        "tags": ["Boundaries"],
+        "summary": "Upload a CSV or JSON file to start a bulk boundary lookup job",
+        "operationId": "createBoundaryJob",
+        "security": [{ "AdminPasswordHeader": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "maxItems": 50000,
+                "items": { "$ref": "#/components/schemas/BulkBoundaryRequest" }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BulkJobCreated" }
+              }
+            }
+          },
+          "400": { "description": "Invalid input or row error" },
+          "401": { "description": "Unauthorized" },
+          "413": { "description": "Payload too large" }
+        }
+      }
+    },
+    "/api/boundaries/jobs/{jobId}": {
+      "get": {
+        "tags": ["Boundaries"],
+        "summary": "Get the status of a bulk boundary job",
+        "operationId": "getBoundaryJob",
+        "security": [{ "AdminPasswordHeader": [] }],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "64a1b2c3d4e5f6g7h8i9j0k1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job status",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BoundaryJob" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Job not found" }
+        }
+      }
+    },
+    "/api/boundaries/jobs/{jobId}/next": {
+      "post": {
+        "tags": ["Boundaries"],
+        "summary": "Process the next 25 students in a bulk job",
+        "operationId": "processNextBoundaryChunk",
+        "security": [{ "AdminPasswordHeader": [] }],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "64a1b2c3d4e5f6g7h8i9j0k1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chunk processed",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BoundaryJobNext" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Job not found" }
+        }
+      }
+    },
+    "/api/boundaries/jobs/{jobId}/results": {
+      "get": {
+        "tags": ["Boundaries"],
+        "summary": "Download the completed job results",
+        "operationId": "downloadBoundaryResults",
+        "security": [{ "AdminPasswordHeader": [] }],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "enum": ["csv", "json"], "default": "json" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Results in JSON or CSV",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/BoundaryJobResult" }
+                }
+              },
+              "text/csv": {
+                "schema": { "type": "string" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Job not found" }
+        }
       }
     },
     "/api/programs": {
@@ -558,6 +730,69 @@
           "ShortName": { "type": "string" },
           "url": { "type": "string" },
           "Main office number": { "type": "string" }
+        }
+      },
+      "BulkBoundaryRequest": {
+        "type": "object",
+        "required": ["lat", "lng", "grade"],
+        "properties": {
+          "lat": { "type": "number" },
+          "lng": { "type": "number" },
+          "grade": {
+            "oneOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "enum": ["-1", "PreK", "Pre-K", "Pre-Kindergarten", "0", "K", "Kindergarten", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "14"]
+              }
+            ]
+          }
+        }
+      },
+      "BulkBoundaryResponse": {
+        "type": "array",
+        "maxItems": 4,
+        "items": { "allOf": [{ "$ref": "#/components/schemas/SchoolAssignment" }] }
+      },
+      "BulkJobCreated": {
+        "type": "object",
+        "properties": {
+          "jobId": { "type": "string" },
+          "status": { "type": "string" },
+          "total": { "type": "number" }
+        }
+      },
+      "BoundaryJob": {
+        "type": "object",
+        "properties": {
+          "jobId": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "processing", "completed", "failed"] },
+          "total": { "type": "number" },
+          "processed": { "type": "number" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "completedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "error": { "type": "string", "nullable": true }
+        }
+      },
+      "BoundaryJobNext": {
+        "type": "object",
+        "properties": {
+          "jobId": { "type": "string" },
+          "status": { "type": "string" },
+          "total": { "type": "number" },
+          "processed": { "type": "number" },
+          "hasMore": { "type": "boolean" }
+        }
+      },
+      "BoundaryJobResult": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "assignments": {
+            "type": "array",
+            "items": { "allOf": [{ "$ref": "#/components/schemas/SchoolAssignment" }] }
+          },
+          "error": { "type": "string", "nullable": true }
         }
       }
     },

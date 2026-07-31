@@ -385,12 +385,23 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             :to="'/admin'"
             :class="[
               'px-3 py-2 text-sm font-medium uppercase w-full text-center',
-              route.path.startsWith('/admin')
+              route.path === '/admin'
                 ? 'text-blue-800 border-t-2 border-l-2 border-r-2 border-blue-800'
                 : 'text-slate-700 bg-slate-100 hover:bg-blue-50 border-b-2 border-blue-800',
             ]"
           >
             Find a Program
+          </ULink>
+          <ULink
+            :to="'/admin/bulk-boundaries'"
+            :class="[
+              'px-3 py-2 text-sm font-medium uppercase w-full text-center',
+              route.path.startsWith('/admin/bulk')
+                ? 'text-blue-800 border-t-2 border-l-2 border-r-2 border-blue-800'
+                : 'text-slate-700 bg-slate-100 hover:bg-blue-100 border-b-2 border-blue-800',
+            ]"
+          >
+            Bulk Boundaries
           </ULink>
           <ULink
             :to="'/schools'"
