@@ -39,6 +39,13 @@ const geocodeProgressPercent = computed(() => {
   return Math.round((geocodedProgress.value / geocodedTotal.value) * 100);
 });
 
+const successfullyGeocodedCount = computed(() => {
+  if (!geocodedRows.value) return 0;
+  return geocodedRows.value.filter(
+    (r) => r != null && r.lat != null && r.lng != null
+  ).length;
+});
+
 function getPassword(): string | null {
   try {
     return localStorage.getItem("admin_password");
@@ -168,13 +175,36 @@ async function geocodeAll() {
     geocodedRows.value = all;
     rowsForAssignment.value = all;
     geocodeEta.value = null;
-    await startAssignment();
   } catch (err: any) {
     geocodeError.value =
       err?.data?.statusMessage || err?.message || "Geocoding failed";
   } finally {
     geocoding.value = false;
   }
+}
+
+function downloadGeocodedCsv() {
+  if (!geocodedRows.value) return;
+  const csv = toCsv(geocodedRows.value);
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "geocoded.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadGeocodedJson() {
+  if (!geocodedRows.value) return;
+  const json = JSON.stringify(geocodedRows.value, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "geocoded.json";
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 async function processLatLng() {
@@ -431,11 +461,24 @@ async function downloadResults(format: "csv" | "json") {
           class="border rounded p-4 bg-gray-50 mb-6"
         >
           <p class="font-medium mb-2">
-            Geocoding complete: {{ geocodedRows.length }} addresses
+            Geocoding complete: {{ successfullyGeocodedCount }} of
+            {{ geocodedRows.length }} rows successfully geocoded.
           </p>
-          <p class="text-sm text-gray-600">
-            Starting neighborhood assignment…
+          <p class="text-sm text-gray-600 mb-4">
+            Download the geocoded file (CSV or JSON) or use the data to run the
+            neighborhood assignment.
           </p>
+          <div class="flex flex-wrap gap-3 mb-4">
+            <UButton variant="outline" @click="downloadGeocodedCsv">
+              Download geocoded CSV
+            </UButton>
+            <UButton variant="outline" @click="downloadGeocodedJson">
+              Download geocoded JSON
+            </UButton>
+            <UButton @click="startAssignment">
+              Run Neighborhood Assignment
+            </UButton>
+          </div>
         </div>
 
         <div
@@ -443,7 +486,13 @@ async function downloadResults(format: "csv" | "json") {
           class="border rounded p-4 bg-gray-50"
         >
           <div class="flex justify-between mb-2">
-            <span class="font-medium">{{ job.status }}</span>
+            <span class="font-medium">
+              {{
+                job.status === "completed"
+                  ? "Neighborhood assignment completed"
+                  : "Running neighborhood assignments…"
+              }}
+            </span>
             <span class="text-gray-600">
               {{ job.processed }} / {{ job.total }} students
             </span>

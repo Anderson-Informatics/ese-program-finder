@@ -34,9 +34,7 @@ export default async function geocodeBatch(
         .trim();
       const url = `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(
         q
-      )}&apiKey=${GEOCODE_API_KEY}&qq=country=USA&qq=state=${encodeURIComponent(
-        a.state
-      )}`;
+      )}&apiKey=${GEOCODE_API_KEY}`;
 
       try {
         const data = (await $fetch(url)) as any;
@@ -44,7 +42,7 @@ export default async function geocodeBatch(
         if (!item) {
           return { index: a.index, lat: null, lng: null };
         }
-        const point = item.position || (item.access && item.access[0]);
+        const point = (item.access && item.access[0]) || item.position;
         if (!point) {
           return { index: a.index, lat: null, lng: null };
         }
