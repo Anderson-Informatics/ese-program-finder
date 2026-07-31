@@ -335,6 +335,12 @@ async function downloadResults(format: "csv" | "json") {
           <UButton variant="ghost" @click="doLogout"> Log out </UButton>
         </div>
 
+        <p class="text-sm text-amber-700 mb-4">
+          For now, keep uploads under ~1,000 addresses to avoid HERE rate limits
+          and Netlify function timeouts. Larger files are processed in
+          100-row chunks, so a very large file can take several minutes.
+        </p>
+
         <form
           @submit.prevent="geocodeAll"
           class="flex flex-col sm:flex-row gap-4 items-start sm:items-end mb-6"
