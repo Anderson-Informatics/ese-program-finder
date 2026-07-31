@@ -1,0 +1,577 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "DPSCD ESE Program Finder API",
+    "description": "Nitro/Nuxt server API for school boundary lookups and special-education program assignment.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development"
+    },
+    {
+      "url": "https://<your-site>.netlify.app",
+      "description": "Production (replace with your Netlify URL)"
+    }
+  ],
+  "paths": {
+    "/api/boundaries": {
+      "get": {
+        "tags": ["Boundaries"],
+        "summary": "Find assigned schools for a location and grade",
+        "operationId": "getBoundaries",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number" },
+            "example": 42.3314
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number" },
+            "example": -83.0458
+          },
+          {
+            "name": "grade",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["PreK", "Pre-K", "K", "Kindergarten", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
+            },
+            "example": "3"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of up to four school matches: elementary, middle, high, neighborhood",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/SchoolAssignment" }
+                },
+                "example": [
+                  { "schoolName": "Bates Academy", "Match_Type": "Within Boundary", "Type": "Elementary", "SchoolID": 1, "High_Grade": 5 },
+                  null,
+                  null,
+                  { "schoolName": "Bates Academy", "Match_Type": "Within Boundary", "Type": "Neighborhood", "SchoolID": 1, "High_Grade": 5 }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs": {
+      "get": {
+        "tags": ["Programs"],
+        "summary": "Return the best program assignment for a student",
+        "operationId": "getProgramAssignment",
+        "parameters": [
+          {
+            "name": "grade",
+            "in": "query",
+            "required": true,
+            "schema": { "$ref": "#/components/schemas/Grade" },
+            "example": "3rd grade"
+          },
+          {
+            "name": "program",
+            "in": "query",
+            "required": true,
+            "schema": { "$ref": "#/components/schemas/Program" },
+            "example": "Autism Spectrum Disorder"
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number" },
+            "example": 42.3314
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number" },
+            "example": -83.0458
+          },
+          {
+            "name": "setting",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["Center-Based", "Comprehensive", "Not Sure"]
+            },
+            "example": "Comprehensive"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assignment array and the method used to choose it",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ProgramAssignment" }
+                },
+                "example": [
+                  [ { "SchoolID": 1, "School": "Bates Academy", "GradeBand": "3-5", "Program": "ASD" } ],
+                  "Within Boundary"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/list": {
+      "get": {
+        "tags": ["Programs"],
+        "summary": "List all available schools for a program and grade",
+        "operationId": "listPrograms",
+        "parameters": [
+          {
+            "name": "grade",
+            "in": "query",
+            "required": true,
+            "schema": { "$ref": "#/components/schemas/Grade" },
+            "example": "3rd grade"
+          },
+          {
+            "name": "program",
+            "in": "query",
+            "required": true,
+            "schema": { "$ref": "#/components/schemas/Program" },
+            "example": "Autism Spectrum Disorder"
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number" },
+            "example": 42.3314
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number" },
+            "example": -83.0458
+          },
+          {
+            "name": "setting",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["Center-Based", "Comprehensive", "Not Sure"]
+            },
+            "example": "Comprehensive"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of matching schools with program summary data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ProgramListItem" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/byProgram": {
+      "get": {
+        "tags": ["Programs"],
+        "summary": "Return all schools that offer a given program key",
+        "operationId": "getProgramsByProgramKey",
+        "parameters": [
+          {
+            "name": "program",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["ASD", "MICI", "ECSE", "MOCI", "POHI", "EI", "VI", "DHH", "DT", "DDEI", "EINT", "RR", "SCI", "SMI", "HI"]
+            },
+            "example": "ASD"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of schools with the requested program counts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ByProgramItem" }
+                },
+                "example": [
+                  { "SchoolID": 1, "School": "Bates Academy", "counts": { "PK-2": 10, "3-5": 15 } }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/schools": {
+      "get": {
+        "tags": ["Programs"],
+        "summary": "Return all schools that have program documents",
+        "operationId": "getProgramSchools",
+        "responses": {
+          "200": {
+            "description": "Unique list of schools",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/SchoolReference" }
+                },
+                "example": [
+                  { "SchoolID": 1, "School": "Bates Academy" }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/{schoolId}": {
+      "get": {
+        "tags": ["Programs"],
+        "summary": "Get a school's program document and summaries",
+        "operationId": "getProgramBySchool",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Program document with summaries",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProgramDocument" }
+              }
+            }
+          },
+          "404": { "description": "Program document not found" }
+        }
+      },
+      "put": {
+        "tags": ["Programs"],
+        "summary": "Update program counts for a school",
+        "operationId": "updateProgramBySchool",
+        "security": [
+          { "AdminPasswordHeader": [] },
+          { "AdminPasswordBody": [] }
+        ],
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "1"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProgramUpdateBody" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated program document",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProgramDocument" }
+              }
+            }
+          },
+          "400": { "description": "Invalid request body or missing data" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/api/admin/login": {
+      "post": {
+        "tags": ["Admin"],
+        "summary": "Validate the admin password",
+        "operationId": "adminLogin",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": { "type": "string" },
+                  "pass": { "type": "string" }
+                }
+              },
+              "example": { "password": "your-admin-password" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login succeeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "ok": { "type": "boolean" } }
+                },
+                "example": { "ok": true }
+              }
+            }
+          },
+          "401": { "description": "Invalid admin password" },
+          "500": { "description": "Admin password not configured" }
+        }
+      }
+    },
+    "/api/schools": {
+      "get": {
+        "tags": ["Schools"],
+        "summary": "Return school records (optionally filtered)",
+        "operationId": "getSchools",
+        "parameters": [
+          {
+            "name": "SchoolID",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "example": "1"
+          },
+          {
+            "name": "SchoolName",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "example": "Bates"
+          },
+          {
+            "name": "Type",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "example": "Elementary"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of school records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/SchoolRecord" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Grade": {
+        "type": "string",
+        "enum": [
+          "Birth to 3",
+          "PreK",
+          "Kindergarten",
+          "1st grade",
+          "2nd grade",
+          "3rd grade",
+          "4th grade",
+          "5th grade",
+          "6th grade",
+          "7th grade",
+          "8th grade",
+          "9th grade",
+          "10th grade",
+          "11th grade",
+          "12th grade",
+          "Post-Secondary"
+        ]
+      },
+      "Program": {
+        "type": "string",
+        "enum": [
+          "Autism Spectrum Disorder",
+          "Day Treatment",
+          "Deaf and Hard of Hearing",
+          "Dual Diagnosed (Emotionally Impaired)",
+          "Early Childhood Special Education",
+          "Early Intervention",
+          "Emotionally Impaired",
+          "Mild Cognitive Impaired",
+          "Moderate Cognitive Impaired",
+          "Physically/Other Health Impaired",
+          "Resource Room",
+          "Severe Cognitive Impaired",
+          "Severe Multiple Impaired",
+          "Visually Impaired"
+        ]
+      },
+      "SchoolAssignment": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "schoolName": { "type": "string" },
+          "Match_Type": { "type": "string", "enum": ["Within Boundary", "Nearest Boundary"] },
+          "Type": { "type": "string", "enum": ["Elementary", "Middle", "High", "Neighborhood"] },
+          "SchoolID": { "type": "number" },
+          "High_Grade": { "type": "number" }
+        }
+      },
+      "ProgramAssignment": {
+        "type": "object",
+        "properties": {
+          "SchoolID": { "type": "number" },
+          "School": { "type": "string" },
+          "GradeBand": { "type": "string" },
+          "Program": { "type": "string" },
+          "ProgramSummary": { "$ref": "#/components/schemas/ProgramSummary" },
+          "location": { "$ref": "#/components/schemas/PointLocation" }
+        }
+      },
+      "ProgramListItem": {
+        "type": "object",
+        "properties": {
+          "SchoolID": { "type": "number" },
+          "School": { "type": "string" },
+          "GradeBand": { "type": "string" },
+          "Program": { "type": "string" },
+          "ProgramSummary": { "$ref": "#/components/schemas/ProgramSummary" },
+          "location": { "$ref": "#/components/schemas/PointLocation" }
+        }
+      },
+      "ByProgramItem": {
+        "type": "object",
+        "properties": {
+          "SchoolID": { "type": "number" },
+          "School": { "type": ["string", "null"] },
+          "counts": { "type": "object", "additionalProperties": { "type": "integer" } }
+        }
+      },
+      "SchoolReference": {
+        "type": "object",
+        "properties": {
+          "SchoolID": { "type": "number" },
+          "School": { "type": ["string", "null"] }
+        }
+      },
+      "ProgramDocument": {
+        "type": "object",
+        "properties": {
+          "SchoolID": { "type": "number" },
+          "School": { "type": "string" },
+          "ASD": { "type": "object" },
+          "MICI": { "type": "object" },
+          "ECSE": { "type": "object" },
+          "MOCI": { "type": "object" },
+          "POHI": { "type": "object" },
+          "EI": { "type": "object" },
+          "VI": { "type": "object" },
+          "DHH": { "type": "object" },
+          "_summaries": { "type": "object" },
+          "lastUpdatedEastern": { "type": "string" }
+        }
+      },
+      "ProgramUpdateBody": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "_admin_password": { "type": "string" },
+          "ASD": { "$ref": "#/components/schemas/ProgramCounts" },
+          "MICI": { "$ref": "#/components/schemas/ProgramCounts" },
+          "ECSE": { "$ref": "#/components/schemas/ProgramCounts" },
+          "MOCI": { "$ref": "#/components/schemas/ProgramCounts" },
+          "POHI": { "$ref": "#/components/schemas/ProgramCounts" },
+          "EI": { "$ref": "#/components/schemas/ProgramCounts" },
+          "VI": { "$ref": "#/components/schemas/ProgramCounts" },
+          "DHH": { "$ref": "#/components/schemas/ProgramCounts" }
+        }
+      },
+      "ProgramCounts": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "example": { "PK-2": 10, "3-5": 15 }
+      },
+      "ProgramSummary": {
+        "type": "object",
+        "properties": {
+          "SchoolID": { "type": "number" },
+          "Program": { "type": "string" },
+          "GradeBand": { "type": "string" },
+          "ProgramCount": { "type": "number" },
+          "Capacity": { "type": "number" },
+          "Remaining": { "type": "number" },
+          "Enrolled": { "type": "number" }
+        }
+      },
+      "PointLocation": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["Point"] },
+          "coordinates": { "type": "array", "items": { "type": "number" } }
+        }
+      },
+      "SchoolRecord": {
+        "type": "object",
+        "properties": {
+          "SchoolID": { "type": "string" },
+          "SchoolName": { "type": "string" },
+          "Address": { "type": "string" },
+          "location": { "$ref": "#/components/schemas/PointLocation" },
+          "Type": { "type": "string" },
+          "ShortName": { "type": "string" },
+          "url": { "type": "string" },
+          "Main office number": { "type": "string" }
+        }
+      }
+    },
+    "securitySchemes": {
+      "AdminPasswordHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-admin-password"
+      },
+      "AdminPasswordBody": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "_admin_password"
+      }
+    }
+  }
+}
