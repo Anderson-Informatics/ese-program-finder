@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { parseCsv } from "~~/server/utils/parseCsv";
 
 useHead({
-  title: "Bulk Geocode Addresses",
+  title: "Bulk Neighborhood Assignments",
 });
 
 const isAuthenticated = ref(false);
@@ -11,10 +11,14 @@ const loginPassword = ref("");
 const loginLoading = ref(false);
 const loginError = ref<string | null>(null);
 
+type InputMode = "address" | "latlng";
+
 const file = ref<File | null>(null);
+const mode = ref<InputMode>("address");
 const geocoding = ref(false);
 const geocodeError = ref<string | null>(null);
 const geocodedRows = ref<any[] | null>(null);
+const rowsForAssignment = ref<any[] | null>(null);
 const geocodedProgress = ref(0);
 const geocodedTotal = ref(0);
 const geocodeEta = ref<string | null>(null);
@@ -162,7 +166,9 @@ async function geocodeAll() {
     }
 
     geocodedRows.value = all;
+    rowsForAssignment.value = all;
     geocodeEta.value = null;
+    await startAssignment();
   } catch (err: any) {
     geocodeError.value =
       err?.data?.statusMessage || err?.message || "Geocoding failed";
@@ -171,20 +177,37 @@ async function geocodeAll() {
   }
 }
 
-function downloadGeocodedCsv() {
-  if (!geocodedRows.value) return;
-  const csv = toCsv(geocodedRows.value);
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "geocoded.csv";
-  a.click();
-  URL.revokeObjectURL(url);
+async function processLatLng() {
+  if (!file.value) return;
+  const password = getPassword();
+  if (!password) {
+    isAuthenticated.value = false;
+    return;
+  }
+
+  try {
+    const text = await file.value.text();
+    const { rows } = parseCsv(text);
+    rowsForAssignment.value = rows;
+    await startAssignment();
+  } catch (err: any) {
+    processingError.value =
+      err?.data?.statusMessage || err?.message || "CSV parsing failed";
+  }
+}
+
+async function startProcess() {
+  processingError.value = null;
+  geocodeError.value = null;
+  if (mode.value === "address") {
+    await geocodeAll();
+  } else {
+    await processLatLng();
+  }
 }
 
 async function startAssignment() {
-  if (!geocodedRows.value) return;
+  if (!rowsForAssignment.value) return;
   const password = getPassword();
   if (!password) {
     isAuthenticated.value = false;
@@ -192,7 +215,7 @@ async function startAssignment() {
   }
 
   // Validate that a grade column exists
-  const keys = Object.keys(geocodedRows.value[0]).map((k) => k.toLowerCase().replace(/[-_]/g, ""));
+  const keys = Object.keys(rowsForAssignment.value[0]).map((k) => k.toLowerCase().replace(/[-_]/g, ""));
   if (!keys.includes("grade") && !keys.includes("gradelevel")) {
     processingError.value =
       "A grade column is required to run neighborhood assignment. Add grade, gradelevel, or grade_level.";
@@ -204,7 +227,7 @@ async function startAssignment() {
   job.value = null;
   assignmentStartTime.value = Date.now();
 
-  const csv = toCsv(geocodedRows.value);
+  const csv = toCsv(rowsForAssignment.value);
   const blob = new Blob([csv], { type: "text/csv" });
   const formData = new FormData();
   formData.append("file", new File([blob], "geocoded.csv", { type: "text/csv" }));
@@ -329,10 +352,23 @@ async function downloadResults(format: "csv" | "json") {
       <div v-else>
         <div class="flex justify-between items-center mb-4">
           <p class="text-gray-700">
-            Upload a CSV with address columns (street/address, city, state, zip)
-            and a grade column.
+            Upload a CSV and run a bulk neighborhood assignment.
           </p>
           <UButton variant="ghost" @click="doLogout"> Log out </UButton>
+        </div>
+
+        <div class="mb-4">
+          <span class="text-sm font-medium text-gray-700 mr-2">
+            Does your file contain address data or lat/long pairs?
+          </span>
+          <label class="mr-3">
+            <input v-model="mode" value="address" type="radio" class="mr-1" />
+            Address data
+          </label>
+          <label>
+            <input v-model="mode" value="latlng" type="radio" class="mr-1" />
+            Lat / Long
+          </label>
         </div>
 
         <p class="text-sm text-amber-700 mb-4">
@@ -342,7 +378,7 @@ async function downloadResults(format: "csv" | "json") {
         </p>
 
         <form
-          @submit.prevent="geocodeAll"
+          @submit.prevent="startProcess"
           class="flex flex-col sm:flex-row gap-4 items-start sm:items-end mb-6"
         >
           <div class="flex-1 w-full">
@@ -350,7 +386,7 @@ async function downloadResults(format: "csv" | "json") {
               for="geocode-file"
               class="block text-sm font-medium text-gray-700 mb-1"
             >
-              Address CSV
+              CSV file
             </label>
             <input
               id="geocode-file"
@@ -362,10 +398,10 @@ async function downloadResults(format: "csv" | "json") {
           </div>
           <UButton
             type="submit"
-            :loading="geocoding"
-            :disabled="!file || geocoding"
+            :loading="geocoding || processing"
+            :disabled="!file || geocoding || processing"
           >
-            Geocode
+            Process
           </UButton>
         </form>
 
@@ -397,17 +433,8 @@ async function downloadResults(format: "csv" | "json") {
           <p class="font-medium mb-2">
             Geocoding complete: {{ geocodedRows.length }} addresses
           </p>
-          <div class="flex flex-wrap gap-3 mb-4">
-            <UButton variant="outline" @click="downloadGeocodedCsv">
-              Download geocoded CSV
-            </UButton>
-            <UButton @click="startAssignment">
-              Run Neighborhood Assignment
-            </UButton>
-          </div>
           <p class="text-sm text-gray-600">
-            lat/lng have been added. Click “Run Neighborhood Assignment” to
-            process the geocoded file through the same bulk boundary tool.
+            Starting neighborhood assignment…
           </p>
         </div>
 

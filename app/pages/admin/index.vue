@@ -399,26 +399,15 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             Find a Program
           </ULink>
           <ULink
-            :to="'/admin/bulk-boundaries'"
+            :to="'/admin/bulk-neighborhood-assignments'"
             :class="[
               'px-3 py-2 text-sm font-medium uppercase w-full text-center',
-              route.path === '/admin/bulk-boundaries'
+              route.path === '/admin/bulk-neighborhood-assignments'
                 ? 'text-blue-800 border-t-2 border-l-2 border-r-2 border-blue-800'
                 : 'text-slate-700 bg-slate-100 hover:bg-blue-100 border-b-2 border-blue-800',
             ]"
           >
-            Bulk Boundaries
-          </ULink>
-          <ULink
-            :to="'/admin/bulk-geocode'"
-            :class="[
-              'px-3 py-2 text-sm font-medium uppercase w-full text-center',
-              route.path.startsWith('/admin/bulk-geocode')
-                ? 'text-blue-800 border-t-2 border-l-2 border-r-2 border-blue-800'
-                : 'text-slate-700 bg-slate-100 hover:bg-blue-100 border-b-2 border-blue-800',
-            ]"
-          >
-            Bulk Geocode
+            Bulk Assignments
           </ULink>
           <ULink
             :to="'/schools'"

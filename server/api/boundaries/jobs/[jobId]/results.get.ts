@@ -1,5 +1,8 @@
 import { requireAdmin } from "~~/server/utils/requireAdmin";
-import { formatAssignment } from "~~/server/utils/formatAssignment";
+import {
+  formatAssignmentId,
+  formatAssignmentName,
+} from "~~/server/utils/formatAssignment";
 import BoundaryJob from "~~/server/models/boundaryJob.model";
 import BoundaryJobResult from "~~/server/models/boundaryJobResult.model";
 
@@ -40,7 +43,10 @@ export default defineEventHandler(async (event) => {
   if (format === "csv") {
     const inputKeys =
       results.length > 0 ? Object.keys(results[0].input || {}) : [];
-    const extraKeys = ["elementary", "middle", "high", "neighborhood", "error"];
+    const levelKeys = ["elementary", "middle", "high", "neighborhood"];
+    const idKeys = levelKeys.map((l) => `${l}_id`);
+    const nameKeys = levelKeys.map((l) => `${l}_name`);
+    const extraKeys = [...idKeys, ...nameKeys, "error"];
     const header = [...inputKeys, ...extraKeys];
 
     const lines = [header.map(toCsvValue).join(",")];
@@ -48,10 +54,12 @@ export default defineEventHandler(async (event) => {
     for (const row of results) {
       const assignments = row.assignments || [];
       const cells = inputKeys.map((k) => toCsvValue(row.input[k]));
-      cells.push(toCsvValue(formatAssignment(assignments[0] as any)));
-      cells.push(toCsvValue(formatAssignment(assignments[1] as any)));
-      cells.push(toCsvValue(formatAssignment(assignments[2] as any)));
-      cells.push(toCsvValue(formatAssignment(assignments[3] as any)));
+      for (let i = 0; i < 4; i++) {
+        cells.push(toCsvValue(formatAssignmentId(assignments[i] as any)));
+      }
+      for (let i = 0; i < 4; i++) {
+        cells.push(toCsvValue(formatAssignmentName(assignments[i] as any)));
+      }
       cells.push(toCsvValue(row.error));
       lines.push(cells.join(","));
     }

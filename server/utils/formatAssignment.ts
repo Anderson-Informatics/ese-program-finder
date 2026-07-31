@@ -1,15 +1,19 @@
 import type { SchoolAssignment } from "./boundaryAssignment";
 
-export function formatAssignment(
+export function formatAssignmentId(
+  a: SchoolAssignment | Partial<SchoolAssignment> | null
+): string {
+  if (!a || a.SchoolID === undefined || a.SchoolID === null) {
+    return "";
+  }
+  return String(a.SchoolID);
+}
+
+export function formatAssignmentName(
   a: SchoolAssignment | Partial<SchoolAssignment> | null
 ): string {
   if (!a || !a.schoolName) {
     return "";
   }
-
-  if (a.Type === "Neighborhood") {
-    return `${a.schoolName} (Neighborhood)`;
-  }
-
-  return `${a.schoolName} (${a.Match_Type || a.Type})`;
+  return a.schoolName;
 }
