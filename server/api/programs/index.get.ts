@@ -1,6 +1,7 @@
 import ProgramModel from "~~/server/models/program.model";
 import SchoolModel from "~~/server/models/school.model";
 import SummaryModel from "~~/server/models/summary.model";
+import BoundaryModel from "~~/server/models/boundary.model";
 
 export default defineEventHandler(async (event) => {
   // Get the query parameters from the request
@@ -64,10 +65,95 @@ export default defineEventHandler(async (event) => {
   let nhid: number | undefined;
 
   if (!["Birth to 3", "PreK", "Post-Secondary"].includes(grade)) {
-    // Get the assigned neighborhood school
-    nhschoolData = await $fetch(
-      `/api/boundaries?lat=${lat}&lng=${lng}&grade=${gradeKey}`
+    // Get the assigned neighborhood school - direct DB query instead of $fetch
+    const parsedGrade =
+      gradeKey === "PreK"
+        ? -1
+        : gradeKey === "K"
+        ? 0
+        : parseInt(gradeKey);
+
+    type School = {
+      schoolName: string;
+      Match_Type: string;
+      Type: string;
+      SchoolID: number;
+      High_Grade: number;
+    };
+
+    let schools = await BoundaryModel.find(
+      {
+        geometry: {
+          $geoIntersects: {
+            $geometry: { type: "Point", coordinates: [lng, lat] },
+          },
+        },
+      },
+      { SchoolID: 1, Type: 1, schoolName: 1, High_Grade: 1, _id: 0 }
     );
+
+    let assignments: School[] = [];
+
+    if (Array.isArray(schools) && !schools.length) {
+      schools = await BoundaryModel.find(
+        {
+          geometry: {
+            $near: { $geometry: { type: "Point", coordinates: [lng, lat] } },
+          },
+        },
+        { SchoolID: 1, Type: 1, schoolName: 1, High_Grade: 1, _id: 0 }
+      );
+      assignments = schools.map((item) => {
+        const { schoolName, Type, SchoolID, High_Grade } =
+          item.toObject() as unknown as School;
+        return {
+          schoolName,
+          Type,
+          SchoolID,
+          High_Grade,
+          Match_Type: "Nearest Boundary",
+        };
+      });
+    } else {
+      assignments = schools.map((item) => {
+        const { schoolName, Type, SchoolID, High_Grade } =
+          item.toObject() as unknown as School;
+        return {
+          schoolName,
+          Type,
+          SchoolID,
+          High_Grade,
+          Match_Type: "Within Boundary",
+        };
+      });
+    }
+
+    let elem = assignments.filter((school) => {
+      return school.Type == "Elementary";
+    })[0];
+    let mid = assignments.filter((school) => {
+      return school.Type == "Middle";
+    })[0];
+    let high = assignments.filter((school) => {
+      return school.Type == "High";
+    })[0];
+
+    let neigh: Partial<School> = {};
+
+    if (elem && typeof elem.High_Grade === 'number' && parsedGrade <= elem.High_Grade) {
+      neigh = { ...elem };
+      neigh.Type = "Neighborhood";
+    } else if (mid && typeof mid.High_Grade === 'number' && parsedGrade <= mid.High_Grade) {
+      neigh = { ...mid };
+      neigh.Type = "Neighborhood";
+    } else if (high && typeof high.High_Grade === 'number' && parsedGrade <= high.High_Grade) {
+      neigh = { ...high };
+      neigh.Type = "Neighborhood";
+    } else {
+      neigh = {};
+    }
+
+    nhschoolData = [elem, mid, high, neigh];
     if (Array.isArray(nhschoolData)) {
       const nh = nhschoolData.find((item: any) => item && item.Type === "Neighborhood");
       if (nh && nh.SchoolID !== undefined) nhid = Number(nh.SchoolID);
