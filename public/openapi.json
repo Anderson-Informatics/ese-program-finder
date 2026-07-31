@@ -240,6 +240,42 @@
         }
       }
     },
+    "/api/geocode": {
+      "post": {
+        "tags": ["Geocoding"],
+        "summary": "Geocode a batch of street addresses",
+        "operationId": "geocodeBatch",
+        "security": [{ "AdminPasswordHeader": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "maxItems": 100,
+                "items": { "$ref": "#/components/schemas/GeocodeRequest" }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Array of input rows with lat and lng added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/GeocodeResponse" }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid input or missing columns" },
+          "401": { "description": "Unauthorized" },
+          "413": { "description": "Too many rows in one batch" }
+        }
+      }
+    },
     "/api/programs": {
       "get": {
         "tags": ["Programs"],
@@ -793,6 +829,28 @@
             "items": { "allOf": [{ "$ref": "#/components/schemas/SchoolAssignment" }] }
           },
           "error": { "type": "string", "nullable": true }
+        }
+      },
+      "GeocodeRequest": {
+        "type": "object",
+        "required": ["street", "city", "state", "zip"],
+        "properties": {
+          "street": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "zip": { "type": "string" }
+        }
+      },
+      "GeocodeResponse": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "street": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "zip": { "type": "string" },
+          "lat": { "type": "number", "nullable": true },
+          "lng": { "type": "number", "nullable": true }
         }
       }
     },

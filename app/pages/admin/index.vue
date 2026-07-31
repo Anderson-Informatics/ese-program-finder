@@ -396,12 +396,23 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             :to="'/admin/bulk-boundaries'"
             :class="[
               'px-3 py-2 text-sm font-medium uppercase w-full text-center',
-              route.path.startsWith('/admin/bulk')
+              route.path === '/admin/bulk-boundaries'
                 ? 'text-blue-800 border-t-2 border-l-2 border-r-2 border-blue-800'
                 : 'text-slate-700 bg-slate-100 hover:bg-blue-100 border-b-2 border-blue-800',
             ]"
           >
             Bulk Boundaries
+          </ULink>
+          <ULink
+            :to="'/admin/bulk-geocode'"
+            :class="[
+              'px-3 py-2 text-sm font-medium uppercase w-full text-center',
+              route.path.startsWith('/admin/bulk-geocode')
+                ? 'text-blue-800 border-t-2 border-l-2 border-r-2 border-blue-800'
+                : 'text-slate-700 bg-slate-100 hover:bg-blue-100 border-b-2 border-blue-800',
+            ]"
+          >
+            Bulk Geocode
           </ULink>
           <ULink
             :to="'/schools'"
