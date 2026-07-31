@@ -10,6 +10,10 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     MONGO_URI: process.env.MONGO_URI,
+    GEOCODE_API_KEY: process.env.GEOCODE_API_KEY,
+    public: {
+      GEOCODE_API_KEY: process.env.GEOCODE_API_KEY,
+    },
   },
   nitro: {
     plugins: ["~~/server/plugins/mongodb.ts"],

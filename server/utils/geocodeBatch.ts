@@ -19,9 +19,10 @@ export interface GeocodedPoint {
 export default async function geocodeBatch(
   addresses: AddressForBatch[]
 ): Promise<GeocodedPoint[]> {
-  const apiKey =
-    process.env.GEOCODE_API_KEY ||
-    "ASdsFNRsscEi5HXC9n3z20er_XG6Vd1ukglGLV5TCi0";
+  const { GEOCODE_API_KEY } = useRuntimeConfig();
+  if (!GEOCODE_API_KEY) {
+    throw new Error("GEOCODE_API_KEY is not configured");
+  }
 
   const serviceHrn = "hrn:here:service::olp-here:search-geocode-7";
   const inputDelimiter = "|";
@@ -31,7 +32,7 @@ export default async function geocodeBatch(
   const outputType = "csv";
 
   const url = `https://batch.search.hereapi.com/v7/batch/jobs?apiKey=${encodeURIComponent(
-    apiKey
+    GEOCODE_API_KEY
   )}&serviceHrn=${encodeURIComponent(serviceHrn)}&inputDelimiter=${encodeURIComponent(
     inputDelimiter
   )}&outputDelimiter=${encodeURIComponent(outputDelimiter)}&outputColumns=${encodeURIComponent(
@@ -61,7 +62,7 @@ export default async function geocodeBatch(
   }
 
   const statusUrl = `https://batch.search.hereapi.com/v7/batch/jobs/${jobId}?apiKey=${encodeURIComponent(
-    apiKey
+    GEOCODE_API_KEY
   )}`;
   let status = submit.status;
   let attempts = 0;
@@ -83,7 +84,7 @@ export default async function geocodeBatch(
   }
 
   const resultsUrl = `https://batch.search.hereapi.com/v7/batch/jobs/${jobId}/results?apiKey=${encodeURIComponent(
-    apiKey
+    GEOCODE_API_KEY
   )}`;
   const resultText = (await $fetch(resultsUrl, {
     responseType: "text",

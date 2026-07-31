@@ -49,8 +49,14 @@ const state = reactive({
 
 const mapCenter = ref<[number, number]>([42.3797, -83.0925])
 
+const runtimeConfig = useRuntimeConfig()
+
 const geocode_address = async (address: string) => {
-  const apiKey = 'ASdsFNRsscEi5HXC9n3z20er_XG6Vd1ukglGLV5TCi0'
+  const apiKey = runtimeConfig.public.GEOCODE_API_KEY
+  if (!apiKey) {
+    console.error('GEOCODE_API_KEY is not configured')
+    return [1, 1]
+  }
   const url = `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(address)}&apiKey=${apiKey}&qq=state=Michigan`
 
   try {
