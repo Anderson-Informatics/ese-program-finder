@@ -10,14 +10,26 @@ export interface SchoolAssignment {
 }
 
 export default async function findBoundaryAssignments(
-  lat: number,
-  lng: number,
-  grade: string | number
+  lat: number | null | undefined,
+  lng: number | null | undefined,
+  grade: string | number | null | undefined
 ): Promise<(SchoolAssignment | Partial<SchoolAssignment> | null)[]> {
-  const parsedGrade = normalizeGrade(grade);
+  if (
+    lat === null ||
+    lng === null ||
+    typeof lat !== "number" ||
+    typeof lng !== "number" ||
+    Number.isNaN(lat) ||
+    Number.isNaN(lng)
+  ) {
+    return [null, null, null, {}];
+  }
 
-  if (typeof lat !== "number" || typeof lng !== "number" || Number.isNaN(lat) || Number.isNaN(lng)) {
-    throw new Error("Invalid lat or lng");
+  let parsedGrade: number;
+  try {
+    parsedGrade = normalizeGrade(grade);
+  } catch {
+    return [null, null, null, {}];
   }
 
   let schools = await BoundaryModel.find(

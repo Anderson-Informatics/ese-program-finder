@@ -88,9 +88,9 @@ export default defineEventHandler(async (event) => {
   const docs: {
     index: number;
     input: Record<string, any>;
-    lat: number;
-    lng: number;
-    grade: number;
+    lat: number | null;
+    lng: number | null;
+    grade: number | null;
   }[] = [];
 
   for (let i = 0; i < rows.length; i++) {
@@ -106,17 +106,15 @@ export default defineEventHandler(async (event) => {
     const rawLng = row[lng];
     const rawGrade = row[grade];
 
-    const nLat = Number(rawLat);
-    const nLng = Number(rawLng);
+    const nLat = Number.isNaN(Number(rawLat)) ? null : Number(rawLat);
+    const nLng = Number.isNaN(Number(rawLng)) ? null : Number(rawLng);
 
-    if (Number.isNaN(nLat) || Number.isNaN(nLng)) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: `Row ${i + 1}: lat and lng must be numeric`,
-      });
+    let nGrade: number | null;
+    try {
+      nGrade = normalizeGrade(rawGrade);
+    } catch {
+      nGrade = null;
     }
-
-    const nGrade = normalizeGrade(rawGrade);
 
     docs.push({
       index: i,
