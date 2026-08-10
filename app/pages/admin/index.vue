@@ -608,59 +608,104 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               Program not Available for Selected Grade
             </h2>
           </div>
-          <div
-            v-else-if="assignedProgram"
-            class="px-6 my-2 hover:bg-blue-100 transition-colors"
-            @mouseover="setMapCenter(assignedProgram)"
-            @mouseleave="activeSchoolId = null"
-          >
-            <h2 class="text-lg font-bold">Suggested Program</h2>
-            <ULink :to="assignedProgram.url" target="_blank" class="font-bold"
-              >{{ assignedProgram["School Name"] }}
-            </ULink>
-            <br />
-            {{ assignedProgram.Address }}<br />
-            {{ assignedProgram["Main office number"] }}<br />
-            {{ assignedProgram.Distance.toFixed(1) }} miles away<br />
-            {{ assignmentMethod }}
-            <div v-if="assignedProgram.ProgramSummary">
-              {{ assignedProgram.ProgramSummary.Capacity }} capacity,
-              {{ assignedProgram.ProgramSummary.Enrolled }} enrolled,
-              {{ assignedProgram.ProgramSummary.Remaining }} available<br />
-              at {{ assignedProgram.GradeBand }} for
-              {{ assignedProgram.Program }}
-            </div>
-          </div>
-          <div v-if="eligiblePrograms === undefined">
-            <h2 class="px-6 text-lg font-bold">No Other Eligible Programs</h2>
-          </div>
-          <div
-            v-else-if="eligiblePrograms && eligiblePrograms.length > 0"
-            class="mt-6"
-          >
-            <h2 class="px-6 text-lg font-bold">Other Eligible Programs</h2>
+          <div v-else-if="assignedProgram" class="mx-6 my-4">
+            <h2 class="text-lg font-bold text-blue-800 mb-4">Program Results</h2>
             <div
-              v-for="program in eligiblePrograms"
-              :key="program['SchoolID']"
-              class="px-6 my-2 hover:bg-blue-100 transition-colors"
-              @mouseover="setMapCenter(program)"
+              class="p-4 bg-blue-50 rounded border border-blue-100"
+              @mouseover="setMapCenter(assignedProgram)"
               @mouseleave="activeSchoolId = null"
             >
-              <ULink :to="program.url" target="_blank" class="font-bold"
-                >{{ program["School Name"] }}
+              <div class="mb-2">
+                <span class="inline-block px-2 py-1 text-xs font-bold uppercase tracking-wide text-blue-800 bg-blue-200 rounded">
+                  Suggested Program
+                </span>
+              </div>
+              <ULink
+                :to="assignedProgram.url"
+                target="_blank"
+                class="text-xl font-bold text-blue-800 hover:underline block"
+              >
+                {{ assignedProgram["School Name"] }}
               </ULink>
-              <br />
-              <span class="text-sm">{{ program.Address }}</span
-              ><br />
-              <span class="text-sm">{{ program["Main office number"] }}</span
-              ><br />
-              {{ program.Distance.toFixed(1) }} miles away
-              <div v-if="assignedProgram && assignedProgram.ProgramSummary">
-                {{ program.ProgramSummary.Capacity }} capacity,
-                {{ program.ProgramSummary.Enrolled }} enrolled,
-                {{ program.ProgramSummary.Remaining }} available<br />
-                at {{ program.ProgramSummary.GradeBand }} for
-                {{ program.ProgramSummary.Program }}
+              <p class="text-slate-700 mt-1">{{ assignedProgram.Address }}</p>
+              <p class="text-slate-500 text-sm">
+                {{ assignedProgram["Main office number"] }}
+              </p>
+              <div v-if="assignedProgram.ProgramSummary" class="mt-3 flex flex-wrap gap-2">
+                <span class="px-2 py-1 text-sm font-medium rounded bg-white border border-slate-200 text-slate-700">
+                  Capacity: {{ assignedProgram.ProgramSummary.Capacity }}
+                </span>
+                <span class="px-2 py-1 text-sm font-medium rounded bg-white border border-slate-200 text-slate-700">
+                  Enrolled: {{ assignedProgram.ProgramSummary.Enrolled }}
+                </span>
+                <span class="px-2 py-1 text-sm font-medium rounded bg-white border border-slate-200 text-green-700">
+                  Available: {{ assignedProgram.ProgramSummary.Remaining }}
+                </span>
+              </div>
+              <p
+                v-if="assignedProgram.GradeBand && assignedProgram.Program"
+                class="mt-2 text-sm text-slate-500"
+              >
+                at {{ assignedProgram.GradeBand }} for
+                {{ assignedProgram.Program }}
+              </p>
+              <p v-if="assignmentMethod" class="mt-2 text-sm text-slate-500 italic">
+                {{ assignmentMethod }}
+              </p>
+              <div v-if="assignedProgram.Distance" class="mt-2 text-sm text-slate-500">
+                {{ assignedProgram.Distance.toFixed(1) }} miles away
+              </div>
+            </div>
+
+            <div v-if="eligiblePrograms === undefined" class="mt-4">
+              <h2 class="text-lg font-bold">No Other Eligible Programs</h2>
+            </div>
+            <div
+              v-else-if="eligiblePrograms && eligiblePrograms.length > 0"
+              class="mt-4"
+            >
+              <div class="border-t pt-4">
+                <h3 class="text-sm font-bold uppercase text-slate-500 mb-3">
+                  Other Eligible Programs
+                </h3>
+                <div
+                  v-for="(program, index) in eligiblePrograms"
+                  :key="program['SchoolID']"
+                  :class="['p-3 rounded flex flex-col gap-1', index % 2 === 0 ? 'bg-slate-50' : 'bg-white']"
+                  @mouseover="setMapCenter(program)"
+                  @mouseleave="activeSchoolId = null"
+                >
+                  <div class="flex justify-between items-start">
+                    <ULink
+                      :to="program.url"
+                      target="_blank"
+                      class="font-bold text-blue-800 hover:underline"
+                    >
+                      {{ program["School Name"] }}
+                    </ULink>
+                    <span class="text-sm font-bold text-slate-700">
+                      {{ program.Distance.toFixed(1) }} mi
+                    </span>
+                  </div>
+                  <div v-if="program.ProgramSummary" class="flex flex-wrap gap-2 mt-1">
+                    <span class="px-2 py-0.5 text-xs font-medium rounded bg-white border border-slate-200 text-slate-700">
+                      Capacity: {{ program.ProgramSummary.Capacity }}
+                    </span>
+                    <span class="px-2 py-0.5 text-xs font-medium rounded bg-white border border-slate-200 text-slate-700">
+                      Enrolled: {{ program.ProgramSummary.Enrolled }}
+                    </span>
+                    <span class="px-2 py-0.5 text-xs font-medium rounded bg-white border border-slate-200 text-green-700">
+                      Available: {{ program.ProgramSummary.Remaining }}
+                    </span>
+                  </div>
+                  <p
+                    v-if="program.ProgramSummary && program.ProgramSummary.GradeBand && program.ProgramSummary.Program"
+                    class="text-xs text-slate-500"
+                  >
+                    at {{ program.ProgramSummary.GradeBand }} for
+                    {{ program.ProgramSummary.Program }}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

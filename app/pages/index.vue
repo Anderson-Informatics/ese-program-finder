@@ -293,13 +293,31 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                 class="text-blue-800">esespecial.programs@detroitk12.org</a>
               or phone: (313) 748-6363.</p>
           </div>
-          <div v-else-if="assignedProgram" class="px-6 my-2 hover:bg-blue-100 transition-colors " @mouseover="setMapCenter(assignedProgram)" @mouseleave="activeSchoolId = null">
-            <h2 class="text-lg font-bold">Suggested Program</h2>
-            <ULink :to="assignedProgram.url" target="_blank" class="font-bold">{{ assignedProgram['School Name'] }}
+          <div
+            v-else-if="assignedProgram"
+            class="p-4 bg-blue-50 rounded border border-blue-100 mx-6 my-4"
+            @mouseover="setMapCenter(assignedProgram)"
+            @mouseleave="activeSchoolId = null"
+          >
+            <div class="mb-2">
+              <span class="inline-block px-2 py-1 text-xs font-bold uppercase tracking-wide text-blue-800 bg-blue-200 rounded">
+                Suggested Program
+              </span>
+            </div>
+            <ULink
+              :to="assignedProgram.url"
+              target="_blank"
+              class="text-xl font-bold text-blue-800 hover:underline block"
+            >
+              {{ assignedProgram['School Name'] }}
             </ULink>
-            <br />
-            {{ assignedProgram.Address }}<br />
-            {{ assignedProgram['Main office number'] }}
+            <p class="text-slate-700 mt-1">{{ assignedProgram.Address }}</p>
+            <p class="text-slate-500 text-sm">
+              {{ assignedProgram['Main office number'] }}
+            </p>
+            <div v-if="assignedProgram.Distance" class="mt-2 text-sm text-slate-500">
+              {{ assignedProgram.Distance.toFixed(1) }} miles away
+            </div>
           </div>
         </UPageList>
       </div>
