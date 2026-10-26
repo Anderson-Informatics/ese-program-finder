@@ -11,6 +11,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     MONGO_URI: process.env.MONGO_URI,
     GEOCODE_API_KEY: process.env.GEOCODE_API_KEY,
+    programSyncApiKey: process.env.NUXT_PROGRAM_SYNC_API_KEY,
     public: {
       GEOCODE_API_KEY: process.env.GEOCODE_API_KEY,
     },

@@ -340,6 +340,81 @@
         }
       }
     },
+    "/api/programs/export": {
+      "get": {
+        "tags": ["Programs"],
+        "summary": "Export all raw program collection documents",
+        "operationId": "exportPrograms",
+        "security": [{ "ProgramSyncApiKey": [] }],
+        "responses": {
+          "200": {
+            "description": "All program documents and their original fields, including _id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "type": "object", "additionalProperties": true }
+                }
+              }
+            }
+          },
+          "401": { "description": "Missing or invalid API key" },
+          "503": { "description": "API key not configured or database unavailable" }
+        }
+      }
+    },
+    "/api/summaries/bulk": {
+      "post": {
+        "tags": ["Programs"],
+        "summary": "Update existing program summaries in bulk",
+        "operationId": "bulkUpdateSummaries",
+        "security": [{ "ProgramSyncApiKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1000,
+                "items": { "$ref": "#/components/schemas/SummaryBulkUpdate" }
+              },
+              "example": [
+                {
+                  "SchoolID": 1,
+                  "Program": "ASD",
+                  "GradeBand": "PK-2",
+                  "ProgramCount": 10,
+                  "Capacity": 20,
+                  "Remaining": 8,
+                  "Enrolled": 12
+                }
+              ]
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Existing records matched and updated; unmatched records are not inserted. LastUpdated is set by the server.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "matchedCount": { "type": "integer" },
+                    "modifiedCount": { "type": "integer" },
+                    "upsertedCount": { "type": "integer", "example": 0 }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid or empty request body" },
+          "401": { "description": "Missing or invalid API key" },
+          "503": { "description": "API key not configured or database unavailable" }
+        }
+      }
+    },
     "/api/programs/list": {
       "get": {
         "tags": ["Programs"],
@@ -748,6 +823,19 @@
           "Enrolled": { "type": "number" }
         }
       },
+      "SummaryBulkUpdate": {
+        "type": "object",
+        "required": ["SchoolID", "Program", "GradeBand", "ProgramCount", "Capacity", "Remaining", "Enrolled"],
+        "properties": {
+          "SchoolID": { "type": "integer" },
+          "Program": { "type": "string", "minLength": 1 },
+          "GradeBand": { "type": "string", "minLength": 1 },
+          "ProgramCount": { "type": "number" },
+          "Capacity": { "type": "number" },
+          "Remaining": { "type": "number" },
+          "Enrolled": { "type": "number" }
+        }
+      },
       "PointLocation": {
         "type": "object",
         "properties": {
@@ -855,6 +943,11 @@
       }
     },
     "securitySchemes": {
+      "ProgramSyncApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key"
+      },
       "AdminPasswordHeader": {
         "type": "apiKey",
         "in": "header",
